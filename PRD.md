@@ -359,12 +359,23 @@ interface ClaimRequest {
 - [ ] Tags input — owner selects cuisine type, dietary flags for their restaurant
 - [ ] "Claim this restaurant" flow (for seeded restaurants)
 
-#### 1.2 Admin Tools (Web)
+#### 1.2 Admin Dashboard (Web — Founder-Only)
 
-- [ ] Admin panel (protected route, role-based access)
+A dedicated dashboard accessible only to the platform admin (founder). Serves as the central operations hub for managing the platform. Starts with seeding and claim review, and expands over time into a tool for directly assisting restaurant owners with administrative tasks.
+
+**Phase 1 scope:**
+- [ ] Admin panel (protected route, role-based access — founder only)
 - [ ] Seed restaurant tool — create restaurant profiles from public data
 - [ ] Claim request review queue — approve/reject ownership claims
 - [ ] Restaurant moderation — view all restaurants, edit, unpublish if needed
+- [ ] Platform overview stats (total restaurants, pending claims, published count)
+
+**Future expansion (Phase 2+):**
+- [ ] Owner support tools — edit a restaurant's menu/profile on behalf of an owner (e.g., owner calls in and needs help)
+- [ ] Account management — view/manage user accounts, reset owner access, reassign ownership
+- [ ] Platform health monitoring — flagged content, inactive restaurants, stale menus
+- [ ] Onboarding assistance — walk new owners through setup, pre-populate data for them
+- [ ] Bulk operations — batch-update tags, hours, or menu structures across restaurants
 
 #### 1.3 Customer Mobile App
 
