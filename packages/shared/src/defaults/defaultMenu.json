@@ -1,0 +1,143 @@
+[
+  {
+    "menuName": "Breakfast",
+    "categories": [
+      {
+        "categoryName": "Pancakes",
+        "items": [
+          {
+            "itemName": "Buttermilk Pancakes",
+            "price": 7.99,
+            "description": "2 fluffy pancakes served with toast, breakfast potatoes and your choice of bacon or sausage",
+            "ingredients": ["Chocolate Chips", "Flour", "Milk", "Eggs"]
+          },
+          {
+            "itemName": "Chocolate Chip Pancakes",
+            "price": 7.99,
+            "description": "2 fluffy chocolate chip pancakes served with toast, breakfast potatoes and your choice of bacon or sausage",
+            "ingredients": ["Chocolate Chips", "Flour", "Milk", "Eggs"]
+          },
+          {
+            "itemName": "Blueberry Pancakes",
+            "price": 7.99,
+            "description": "2 fluffy blueberry pancakes served with toast, breakfast potatoes and your choice of bacon or sausage",
+            "ingredients": ["Blueberry", "Flour", "Milk", "Eggs"]
+          }
+        ]
+      },
+      {
+        "categoryName": "Waffles",
+        "items": [
+          {
+            "itemName": "Buttermilk Waffle",
+            "price": 7.99,
+            "description": "A buttermilk waffle served with toast, breakfast potatoes and your choice of bacon or sausage",
+            "ingredients": ["Flour", "Milk", "Eggs"]
+          },
+          {
+            "itemName": "Chocolate Chip Waffle",
+            "price": 7.99,
+            "description": "A chocolate chip waffle served with toast, breakfast potatoes and your choice of bacon or sausage",
+            "ingredients": ["Chocolate Chip", "Flour", "Milk", "Eggs"]
+          },
+          {
+            "itemName": "Blueberry Waffle",
+            "price": 7.99,
+            "description": "A blueberry waffle served with toast, breakfast potatoes and your choice of bacon or sausage",
+            "ingredients": ["Flour", "Milk", "Eggs"]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "menuName": "Lunch",
+    "categories": [
+      {
+        "categoryName": "Sandwiches",
+        "items": [
+          {
+            "itemName": "Fried Chicken Sandwich",
+            "price": 9.99,
+            "description": "Fried chicken sandwich with pickles and lettuce. Served with side of fries.",
+            "ingredients": ["Chicken", "Panko", "Buttermilk", "Pickles", "Lettuce", "Potatoes"]
+          },
+          {
+            "itemName": "Grilled Cheese Sandwich w/ Tomato Soup",
+            "price": 8.99,
+            "description": "Grilled Cheese sandwich served with your choice of cheddar, gouda, or havarti - whole wheat or white bread. Side of tomato soup",
+            "ingredients": ["White or Whole Wheat bread", "Cheddar", "Gouda", "Havarti", "Tomatoes", "Black Pepper"]
+          },
+          {
+            "itemName": "BBQ Pulled Pork Sandwich",
+            "price": 9.99,
+            "description": "Pulled Pork Sandwich served with specialty, in house bbq sauce and a side of fries.",
+            "ingredients": ["Pork", "BBQ Sauce", "Potatoes"]
+          }
+        ]
+      },
+      {
+        "categoryName": "Other Entrees",
+        "items": [
+          {
+            "itemName": "Chicken Tenders",
+            "price": 8.99,
+            "description": "4 freshly made chicken strips served with fries.",
+            "ingredients": ["Chicken", "Potatoes"]
+          },
+          {
+            "itemName": "Fish and Chips",
+            "price": 10.99,
+            "description": "Hand Breaded White Fish w/ Home Style Potato Chips or French Fries: Served w/ Tartar Sauce",
+            "ingredients": ["White Fish", "Potatoes", "Tartar Sauce"]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "menuName": "Dinner",
+    "categories": [
+      {
+        "categoryName": "Sandwiches",
+        "items": [
+          {
+            "itemName": "Fried Chicken Sandwich",
+            "price": 9.99,
+            "description": "Fried chicken sandwich with pickles and lettuce. Served with side of fries.",
+            "ingredients": ["Chicken", "Panko", "Buttermilk", "Pickles", "Lettuce", "Potatoes"]
+          },
+          {
+            "itemName": "Grilled Cheese Sandwich w/ Tomato Soup",
+            "price": 8.99,
+            "description": "Grilled Cheese sandwich served with your choice of cheddar, gouda, or havarti - whole wheat or white bread. Side of tomato soup",
+            "ingredients": ["White or Whole Wheat bread", "Cheddar", "Gouda", "Havarti", "Tomatoes", "Black Pepper"]
+          },
+          {
+            "itemName": "BBQ Pulled Pork Sandwich",
+            "price": 9.99,
+            "description": "Pulled Pork Sandwich served with specialty, in house bbq sauce and a side of fries.",
+            "ingredients": ["Pork", "BBQ Sauce", "Potatoes"]
+          }
+        ]
+      },
+      {
+        "categoryName": "Steak Dinner",
+        "items": [
+          {
+            "itemName": "Filet Mignon",
+            "price": 12.99,
+            "description": "8oz Filet mignon wrapped in Applewood smoked bacon served with your choice of fries or a baked potato",
+            "ingredients": ["Beef", "Smoked Bacon"]
+          },
+          {
+            "itemName": "New York Strip",
+            "price": 14.99,
+            "description": "Classic 12oz Steak served with your choice of fries or a baked potato",
+            "ingredients": ["Beef", "Potatoes"]
+          }
+        ]
+      }
+    ]
+  }
+]

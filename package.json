@@ -1,0 +1,26 @@
+{
+  "name": "chooz",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@chooz/web",
+    "dev:mobile": "turbo run dev --filter=@chooz/mobile",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "pnpm": {
+    "overrides": {
+      "react": "19.1.0",
+      "react-dom": "19.1.0",
+      "@types/react": "~19.1.0"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+
+      // User subcollections (notes, favorites)
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Restaurants collection
+    match /restaurants/{restaurantId} {
+      allow read: if true; // Public read
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && (resource.data.ownerUid == request.auth.uid
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+
+      // Restaurant subcollections (menus, categories, items)
+      match /{path=**} {
+        allow read: if true;
+        allow write: if request.auth != null
+          && (get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerUid == request.auth.uid
+              || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      }
+    }
+
+    // Claim requests
+    match /claimRequests/{requestId} {
+      allow create: if request.auth != null;
+      allow read, update: if request.auth != null
+        && (resource.data.claimantUid == request.auth.uid
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+  }
+}
