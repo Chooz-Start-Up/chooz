@@ -12,52 +12,86 @@ import {
   type User as FirebaseUser,
   type Unsubscribe,
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { getAuthInstance } from "../firebase";
+import { toAppError } from "../errors";
 
 // Email/password
 export async function loginWithEmail(email: string, password: string) {
-  return signInWithEmailAndPassword(auth, email, password);
+  try {
+    return await signInWithEmailAndPassword(getAuthInstance(), email, password);
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function registerWithEmail(email: string, password: string) {
-  const credential = await createUserWithEmailAndPassword(auth, email, password);
-  await sendEmailVerification(credential.user);
-  return credential;
+  try {
+    const credential = await createUserWithEmailAndPassword(getAuthInstance(), email, password);
+    await sendEmailVerification(credential.user);
+    return credential;
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 // OAuth providers
 export async function loginWithGoogle() {
-  return signInWithPopup(auth, new GoogleAuthProvider());
+  try {
+    return await signInWithPopup(getAuthInstance(), new GoogleAuthProvider());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function loginWithFacebook() {
-  return signInWithPopup(auth, new FacebookAuthProvider());
+  try {
+    return await signInWithPopup(getAuthInstance(), new FacebookAuthProvider());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function loginWithApple() {
-  return signInWithPopup(auth, new OAuthProvider("apple.com"));
+  try {
+    return await signInWithPopup(getAuthInstance(), new OAuthProvider("apple.com"));
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 // Account management
 export async function resetPassword(email: string) {
-  return sendPasswordResetEmail(auth, email);
+  try {
+    return await sendPasswordResetEmail(getAuthInstance(), email);
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function verifyEmail() {
-  if (auth.currentUser) {
-    return sendEmailVerification(auth.currentUser);
+  try {
+    const user = getAuthInstance().currentUser;
+    if (user) {
+      return await sendEmailVerification(user);
+    }
+  } catch (error) {
+    throw toAppError(error);
   }
 }
 
 export async function logout() {
-  return signOut(auth);
+  try {
+    return await signOut(getAuthInstance());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 // Auth state listener
 export function onAuthStateChanged(callback: (user: FirebaseUser | null) => void): Unsubscribe {
-  return firebaseOnAuthStateChanged(auth, callback);
+  return firebaseOnAuthStateChanged(getAuthInstance(), callback);
 }
 
 export function getCurrentUser(): FirebaseUser | null {
-  return auth.currentUser;
+  return getAuthInstance().currentUser;
 }

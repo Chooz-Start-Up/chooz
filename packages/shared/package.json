@@ -10,9 +10,6 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
-  "dependencies": {
-    "firebase": "^11.0.0"
-  },
   "devDependencies": {
     "typescript": "^5"
   }

@@ -11,10 +11,14 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import type { Category } from "@chooz/shared";
-import { db } from "../firebase";
+import { getDbInstance } from "../firebase";
+import { toAppError } from "../errors";
+import { categoryConverter } from "./converters";
 
-function categoriesCollection(restaurantId: string, menuId: string) {
-  return collection(db, "restaurants", restaurantId, "menus", menuId, "categories");
+function categoriesRef(restaurantId: string, menuId: string) {
+  return collection(
+    getDbInstance(), "restaurants", restaurantId, "menus", menuId, "categories",
+  ).withConverter(categoryConverter);
 }
 
 export async function getCategory(
@@ -22,14 +26,22 @@ export async function getCategory(
   menuId: string,
   categoryId: string,
 ): Promise<Category | null> {
-  const snap = await getDoc(doc(categoriesCollection(restaurantId, menuId), categoryId));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Category) : null;
+  try {
+    const snap = await getDoc(doc(categoriesRef(restaurantId, menuId), categoryId));
+    return snap.exists() ? snap.data() : null;
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function getCategories(restaurantId: string, menuId: string): Promise<Category[]> {
-  const q = query(categoriesCollection(restaurantId, menuId), orderBy("sortOrder"));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Category);
+  try {
+    const q = query(categoriesRef(restaurantId, menuId), orderBy("sortOrder"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function createCategory(
@@ -38,11 +50,14 @@ export async function createCategory(
   categoryId: string,
   data: Omit<Category, "id" | "createdAt" | "updatedAt">,
 ): Promise<void> {
-  await setDoc(doc(categoriesCollection(restaurantId, menuId), categoryId), {
-    ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await setDoc(
+      doc(getDbInstance(), "restaurants", restaurantId, "menus", menuId, "categories", categoryId),
+      { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() },
+    );
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function updateCategory(
@@ -51,10 +66,14 @@ export async function updateCategory(
   categoryId: string,
   data: Partial<Omit<Category, "id" | "createdAt">>,
 ): Promise<void> {
-  await updateDoc(doc(categoriesCollection(restaurantId, menuId), categoryId), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(
+      doc(getDbInstance(), "restaurants", restaurantId, "menus", menuId, "categories", categoryId),
+      { ...data, updatedAt: serverTimestamp() },
+    );
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function deleteCategory(
@@ -62,5 +81,11 @@ export async function deleteCategory(
   menuId: string,
   categoryId: string,
 ): Promise<void> {
-  await deleteDoc(doc(categoriesCollection(restaurantId, menuId), categoryId));
+  try {
+    await deleteDoc(
+      doc(getDbInstance(), "restaurants", restaurantId, "menus", menuId, "categories", categoryId),
+    );
+  } catch (error) {
+    throw toAppError(error);
+  }
 }

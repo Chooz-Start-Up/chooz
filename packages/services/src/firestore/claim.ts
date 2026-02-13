@@ -11,40 +11,62 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import type { ClaimRequest } from "@chooz/shared";
-import { db } from "../firebase";
+import { getDbInstance } from "../firebase";
+import { toAppError } from "../errors";
+import { claimRequestConverter } from "./converters";
 
 const COLLECTION = "claimRequests";
 
+function claimsRef() {
+  return collection(getDbInstance(), COLLECTION).withConverter(claimRequestConverter);
+}
+
 export async function getClaimRequest(id: string): Promise<ClaimRequest | null> {
-  const snap = await getDoc(doc(db, COLLECTION, id));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as ClaimRequest) : null;
+  try {
+    const snap = await getDoc(doc(claimsRef(), id));
+    return snap.exists() ? snap.data() : null;
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function getPendingClaims(): Promise<ClaimRequest[]> {
-  const q = query(
-    collection(db, COLLECTION),
-    where("status", "==", "pending"),
-    orderBy("submittedAt"),
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ClaimRequest);
+  try {
+    const q = query(
+      claimsRef(),
+      where("status", "==", "pending"),
+      orderBy("submittedAt"),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function createClaimRequest(
   id: string,
   data: Omit<ClaimRequest, "id" | "submittedAt" | "reviewedAt" | "reviewedBy">,
 ): Promise<void> {
-  await setDoc(doc(db, COLLECTION, id), {
-    ...data,
-    submittedAt: serverTimestamp(),
-    reviewedAt: null,
-    reviewedBy: null,
-  });
+  try {
+    await setDoc(doc(getDbInstance(), COLLECTION, id), {
+      ...data,
+      submittedAt: serverTimestamp(),
+      reviewedAt: null,
+      reviewedBy: null,
+    });
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function updateClaimRequest(
   id: string,
   data: Partial<Omit<ClaimRequest, "id" | "submittedAt">>,
 ): Promise<void> {
-  await updateDoc(doc(db, COLLECTION, id), data);
+  try {
+    await updateDoc(doc(getDbInstance(), COLLECTION, id), data);
+  } catch (error) {
+    throw toAppError(error);
+  }
 }

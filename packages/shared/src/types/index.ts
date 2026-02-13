@@ -1,3 +1,4 @@
+export type { Timestamp } from "./common";
 export type { User } from "./user";
 export type { Restaurant, OperatingHours } from "./restaurant";
 export type { Menu } from "./menu";

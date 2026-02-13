@@ -11,21 +11,31 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import type { Menu } from "@chooz/shared";
-import { db } from "../firebase";
+import { getDbInstance } from "../firebase";
+import { toAppError } from "../errors";
+import { menuConverter } from "./converters";
 
-function menusCollection(restaurantId: string) {
-  return collection(db, "restaurants", restaurantId, "menus");
+function menusRef(restaurantId: string) {
+  return collection(getDbInstance(), "restaurants", restaurantId, "menus").withConverter(menuConverter);
 }
 
 export async function getMenu(restaurantId: string, menuId: string): Promise<Menu | null> {
-  const snap = await getDoc(doc(menusCollection(restaurantId), menuId));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Menu) : null;
+  try {
+    const snap = await getDoc(doc(menusRef(restaurantId), menuId));
+    return snap.exists() ? snap.data() : null;
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function getMenus(restaurantId: string): Promise<Menu[]> {
-  const q = query(menusCollection(restaurantId), orderBy("sortOrder"));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Menu);
+  try {
+    const q = query(menusRef(restaurantId), orderBy("sortOrder"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function createMenu(
@@ -33,11 +43,15 @@ export async function createMenu(
   menuId: string,
   data: Omit<Menu, "id" | "createdAt" | "updatedAt">,
 ): Promise<void> {
-  await setDoc(doc(menusCollection(restaurantId), menuId), {
-    ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await setDoc(doc(getDbInstance(), "restaurants", restaurantId, "menus", menuId), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function updateMenu(
@@ -45,12 +59,20 @@ export async function updateMenu(
   menuId: string,
   data: Partial<Omit<Menu, "id" | "createdAt">>,
 ): Promise<void> {
-  await updateDoc(doc(menusCollection(restaurantId), menuId), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(doc(getDbInstance(), "restaurants", restaurantId, "menus", menuId), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function deleteMenu(restaurantId: string, menuId: string): Promise<void> {
-  await deleteDoc(doc(menusCollection(restaurantId), menuId));
+  try {
+    await deleteDoc(doc(getDbInstance(), "restaurants", restaurantId, "menus", menuId));
+  } catch (error) {
+    throw toAppError(error);
+  }
 }

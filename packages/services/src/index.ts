@@ -1,5 +1,16 @@
-// Firebase app
-export { app, auth, db, storage } from "./firebase";
+// Firebase app (lazy singletons — initialized on first call)
+export {
+  getAppInstance,
+  getAuthInstance,
+  getDbInstance,
+  getStorageInstance,
+} from "./firebase";
+
+// Environment
+export { getFirebaseConfig, type FirebaseEnv } from "./env";
+
+// Errors
+export { AppError, toAppError, type AppErrorCode } from "./errors";
 
 // Auth
 export * as authService from "./auth";

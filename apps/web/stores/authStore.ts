@@ -1,16 +1,21 @@
 import { create } from "zustand";
 import type { User as FirebaseUser } from "firebase/auth";
+import type { User } from "@chooz/shared";
 
 interface AuthState {
-  user: FirebaseUser | null;
+  firebaseUser: FirebaseUser | null;
+  profile: User | null;
   loading: boolean;
-  setUser: (user: FirebaseUser | null) => void;
+  setFirebaseUser: (user: FirebaseUser | null) => void;
+  setProfile: (profile: User | null) => void;
   setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
+  firebaseUser: null,
+  profile: null,
   loading: true,
-  setUser: (user) => set({ user, loading: false }),
+  setFirebaseUser: (firebaseUser) => set({ firebaseUser, loading: false }),
+  setProfile: (profile) => set({ profile }),
   setLoading: (loading) => set({ loading }),
 }));

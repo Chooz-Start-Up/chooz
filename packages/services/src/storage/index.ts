@@ -4,23 +4,36 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { storage } from "../firebase";
+import { getStorageInstance } from "../firebase";
+import { toAppError } from "../errors";
 
 export async function uploadImage(
   path: string,
   file: Blob | Uint8Array | ArrayBuffer,
 ): Promise<string> {
-  const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, file);
-  return getDownloadURL(storageRef);
+  try {
+    const storageRef = ref(getStorageInstance(), path);
+    await uploadBytes(storageRef, file);
+    return getDownloadURL(storageRef);
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function getImageUrl(path: string): Promise<string> {
-  return getDownloadURL(ref(storage, path));
+  try {
+    return await getDownloadURL(ref(getStorageInstance(), path));
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function deleteImage(path: string): Promise<void> {
-  await deleteObject(ref(storage, path));
+  try {
+    await deleteObject(ref(getStorageInstance(), path));
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 // Convenience helpers for restaurant images

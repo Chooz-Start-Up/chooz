@@ -11,18 +11,19 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import type { Item } from "@chooz/shared";
-import { db } from "../firebase";
+import { getDbInstance } from "../firebase";
+import { toAppError } from "../errors";
+import { itemConverter } from "./converters";
 
-function itemsCollection(restaurantId: string, menuId: string, categoryId: string) {
+function itemsRef(restaurantId: string, menuId: string, categoryId: string) {
   return collection(
-    db,
-    "restaurants",
-    restaurantId,
-    "menus",
-    menuId,
-    "categories",
-    categoryId,
-    "items",
+    getDbInstance(), "restaurants", restaurantId, "menus", menuId, "categories", categoryId, "items",
+  ).withConverter(itemConverter);
+}
+
+function itemPath(restaurantId: string, menuId: string, categoryId: string, itemId: string) {
+  return doc(
+    getDbInstance(), "restaurants", restaurantId, "menus", menuId, "categories", categoryId, "items", itemId,
   );
 }
 
@@ -32,8 +33,14 @@ export async function getItem(
   categoryId: string,
   itemId: string,
 ): Promise<Item | null> {
-  const snap = await getDoc(doc(itemsCollection(restaurantId, menuId, categoryId), itemId));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Item) : null;
+  try {
+    const snap = await getDoc(
+      doc(itemsRef(restaurantId, menuId, categoryId), itemId),
+    );
+    return snap.exists() ? snap.data() : null;
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function getItems(
@@ -41,9 +48,13 @@ export async function getItems(
   menuId: string,
   categoryId: string,
 ): Promise<Item[]> {
-  const q = query(itemsCollection(restaurantId, menuId, categoryId), orderBy("sortOrder"));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Item);
+  try {
+    const q = query(itemsRef(restaurantId, menuId, categoryId), orderBy("sortOrder"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function createItem(
@@ -53,11 +64,15 @@ export async function createItem(
   itemId: string,
   data: Omit<Item, "id" | "createdAt" | "updatedAt">,
 ): Promise<void> {
-  await setDoc(doc(itemsCollection(restaurantId, menuId, categoryId), itemId), {
-    ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await setDoc(itemPath(restaurantId, menuId, categoryId, itemId), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function updateItem(
@@ -67,10 +82,14 @@ export async function updateItem(
   itemId: string,
   data: Partial<Omit<Item, "id" | "createdAt">>,
 ): Promise<void> {
-  await updateDoc(doc(itemsCollection(restaurantId, menuId, categoryId), itemId), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(itemPath(restaurantId, menuId, categoryId, itemId), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function deleteItem(
@@ -79,5 +98,9 @@ export async function deleteItem(
   categoryId: string,
   itemId: string,
 ): Promise<void> {
-  await deleteDoc(doc(itemsCollection(restaurantId, menuId, categoryId), itemId));
+  try {
+    await deleteDoc(itemPath(restaurantId, menuId, categoryId, itemId));
+  } catch (error) {
+    throw toAppError(error);
+  }
 }

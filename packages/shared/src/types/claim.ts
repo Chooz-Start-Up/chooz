@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase/firestore";
+import type { Timestamp } from "./common";
 
 export interface ClaimRequest {
   id: string;

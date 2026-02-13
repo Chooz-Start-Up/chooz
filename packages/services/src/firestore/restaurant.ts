@@ -12,52 +12,78 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import type { Restaurant } from "@chooz/shared";
-import { db } from "../firebase";
+import { getDbInstance } from "../firebase";
+import { toAppError } from "../errors";
+import { restaurantConverter } from "./converters";
 
 const COLLECTION = "restaurants";
 
+function restaurantsCol() {
+  return collection(getDbInstance(), COLLECTION).withConverter(restaurantConverter);
+}
+
 export async function getRestaurant(id: string): Promise<Restaurant | null> {
-  const snap = await getDoc(doc(db, COLLECTION, id));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Restaurant) : null;
+  try {
+    const snap = await getDoc(doc(restaurantsCol(), id));
+    return snap.exists() ? snap.data() : null;
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function getRestaurantsByOwner(ownerUid: string): Promise<Restaurant[]> {
-  const q = query(collection(db, COLLECTION), where("ownerUid", "==", ownerUid));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Restaurant);
+  try {
+    const q = query(restaurantsCol(), where("ownerUid", "==", ownerUid));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function getPublishedRestaurants(): Promise<Restaurant[]> {
-  const q = query(
-    collection(db, COLLECTION),
-    where("isPublished", "==", true),
-    orderBy("name"),
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Restaurant);
+  try {
+    const q = query(restaurantsCol(), where("isPublished", "==", true), orderBy("name"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function createRestaurant(
   id: string,
   data: Omit<Restaurant, "id" | "createdAt" | "updatedAt">,
 ): Promise<void> {
-  await setDoc(doc(db, COLLECTION, id), {
-    ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await setDoc(doc(getDbInstance(), COLLECTION, id), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function updateRestaurant(
   id: string,
   data: Partial<Omit<Restaurant, "id" | "createdAt">>,
 ): Promise<void> {
-  await updateDoc(doc(db, COLLECTION, id), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(doc(getDbInstance(), COLLECTION, id), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
 
 export async function deleteRestaurant(id: string): Promise<void> {
-  await deleteDoc(doc(db, COLLECTION, id));
+  try {
+    await deleteDoc(doc(getDbInstance(), COLLECTION, id));
+  } catch (error) {
+    throw toAppError(error);
+  }
 }
