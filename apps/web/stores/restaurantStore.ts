@@ -1,20 +1,42 @@
 import { create } from "zustand";
 import type { Restaurant } from "@chooz/shared";
+import { restaurantService } from "@chooz/services";
 
 interface RestaurantState {
   restaurant: Restaurant | null;
-  restaurants: Restaurant[];
-  loading: boolean;
   setRestaurant: (restaurant: Restaurant | null) => void;
-  setRestaurants: (restaurants: Restaurant[]) => void;
-  setLoading: (loading: boolean) => void;
+  fetchRestaurantForOwner: (ownerUid: string) => Promise<Restaurant | null>;
+  createRestaurant: (
+    data: Omit<Restaurant, "id" | "createdAt" | "updatedAt">,
+  ) => Promise<string>;
+  updateRestaurant: (
+    id: string,
+    data: Partial<Omit<Restaurant, "id" | "createdAt">>,
+  ) => Promise<void>;
 }
 
 export const useRestaurantStore = create<RestaurantState>((set) => ({
   restaurant: null,
-  restaurants: [],
-  loading: false,
   setRestaurant: (restaurant) => set({ restaurant }),
-  setRestaurants: (restaurants) => set({ restaurants }),
-  setLoading: (loading) => set({ loading }),
+
+  fetchRestaurantForOwner: async (ownerUid: string) => {
+    const results = await restaurantService.getRestaurantsByOwner(ownerUid);
+    const restaurant = results[0] ?? null;
+    set({ restaurant });
+    return restaurant;
+  },
+
+  createRestaurant: async (data) => {
+    const id = restaurantService.generateRestaurantId();
+    await restaurantService.createRestaurant(id, data);
+    const created = await restaurantService.getRestaurant(id);
+    set({ restaurant: created });
+    return id;
+  },
+
+  updateRestaurant: async (id, data) => {
+    await restaurantService.updateRestaurant(id, data);
+    const updated = await restaurantService.getRestaurant(id);
+    set({ restaurant: updated });
+  },
 }));

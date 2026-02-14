@@ -17,6 +17,7 @@
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
+    "@mui/icons-material": "^5.18.0",
     "@mui/material": "^5",
     "@mui/material-nextjs": "^7.3.8",
     "firebase": "^11.0.0",

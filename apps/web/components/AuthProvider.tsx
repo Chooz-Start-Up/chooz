@@ -5,12 +5,7 @@ import { authService, userService } from "@chooz/services";
 import type { User } from "@chooz/shared";
 import { useAuthStore } from "@/stores/authStore";
 
-/**
- * Maps a Firebase provider ID to our authProvider enum value.
- */
-function mapProviderId(
-  providerId: string,
-): User["authProvider"] {
+function mapProviderId(providerId: string): User["authProvider"] {
   switch (providerId) {
     case "google.com":
       return "google";
@@ -33,11 +28,10 @@ function mapProviderId(
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setFirebaseUser = useAuthStore((s) => s.setFirebaseUser);
   const setProfile = useAuthStore((s) => s.setProfile);
+  const setLoading = useAuthStore((s) => s.setLoading);
 
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
-      setFirebaseUser(firebaseUser);
-
       if (firebaseUser) {
         let profile = await userService.getUser(firebaseUser.uid);
 
@@ -58,14 +52,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        // Set profile before firebaseUser so AuthGuard sees both atomically
         setProfile(profile);
+        setFirebaseUser(firebaseUser);
       } else {
         setProfile(null);
+        setFirebaseUser(null);
       }
     });
 
     return unsubscribe;
-  }, [setFirebaseUser, setProfile]);
+  }, [setFirebaseUser, setProfile, setLoading]);
 
   return <>{children}</>;
 }

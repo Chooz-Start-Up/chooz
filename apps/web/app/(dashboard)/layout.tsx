@@ -29,10 +29,7 @@ export default function DashboardLayout({
             <li style={{ marginBottom: "0.5rem" }}>
               <a href="/profile">Profile</a>
             </li>
-            <li style={{ marginBottom: "0.5rem" }}>
-              <a href="/images">Images</a>
-            </li>
-            <li style={{ marginBottom: "0.5rem" }}>
+<li style={{ marginBottom: "0.5rem" }}>
               <a href="/setup">Setup</a>
             </li>
           </ul>

@@ -1,5 +1,7 @@
 # Chooz — Project Conventions
 
+> **Before contributing code, read `brain.md`** — it contains current project state, decisions made, gotchas, and a session log. Update it after every meaningful session.
+
 ## What is this project?
 
 Chooz is a restaurant menu discovery platform. Restaurant owners publish menus via a web dashboard, customers browse and search menus via a mobile app. A web fallback provides read-only access for users without the app.

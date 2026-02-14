@@ -1,0 +1,43 @@
+export const CUISINE_TAGS = [
+  "American",
+  "Mexican",
+  "Italian",
+  "Chinese",
+  "Japanese",
+  "Korean",
+  "Thai",
+  "Vietnamese",
+  "Indian",
+  "Mediterranean",
+  "Greek",
+  "French",
+  "Caribbean",
+  "Soul Food",
+  "BBQ",
+  "Seafood",
+  "Pizza",
+  "Burgers",
+  "Sushi",
+  "Ramen",
+  "Bakery",
+  "Cafe",
+  "Deli",
+  "Food Truck",
+  "Fine Dining",
+  "Fast Casual",
+  "Brunch",
+] as const;
+
+export const DIETARY_TAGS = [
+  "Vegetarian",
+  "Vegan",
+  "Gluten-Free",
+  "Halal",
+  "Kosher",
+  "Dairy-Free",
+  "Nut-Free",
+  "Organic",
+  "Keto-Friendly",
+] as const;
+
+export const ALL_TAGS = [...CUISINE_TAGS, ...DIETARY_TAGS] as const;

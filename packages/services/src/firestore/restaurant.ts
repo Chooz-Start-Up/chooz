@@ -18,6 +18,11 @@ import { restaurantConverter } from "./converters";
 
 const COLLECTION = "restaurants";
 
+/** Returns a Firestore auto-generated document ID without creating the document. */
+export function generateRestaurantId(): string {
+  return doc(collection(getDbInstance(), COLLECTION)).id;
+}
+
 function restaurantsCol() {
   return collection(getDbInstance(), COLLECTION).withConverter(restaurantConverter);
 }
