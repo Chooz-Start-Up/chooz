@@ -2,6 +2,7 @@
 
 import { ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { colors } from "@chooz/shared";
 
 const theme = createTheme({
@@ -31,9 +32,11 @@ const theme = createTheme({
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
-    <MuiThemeProvider theme={theme}>
-      <CssBaseline />
-      {children}
-    </MuiThemeProvider>
+    <AppRouterCacheProvider>
+      <MuiThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </MuiThemeProvider>
+    </AppRouterCacheProvider>
   );
 }

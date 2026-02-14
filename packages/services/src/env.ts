@@ -19,26 +19,22 @@ const firebaseEnvSchema = z.object({
 
 export type FirebaseEnv = z.infer<typeof firebaseEnvSchema>;
 
-function getEnv(nextKey: string, expoKey: string): string | undefined {
-  // process.env may not exist in all RN environments — guard against it
-  if (typeof process !== "undefined" && process.env) {
-    return process.env[nextKey] ?? process.env[expoKey];
-  }
-  return undefined;
-}
-
 /**
  * Reads and validates Firebase environment variables.
  * Throws a descriptive error at startup if any are missing.
+ *
+ * NOTE: Each env var must be referenced as a literal `process.env.NEXT_PUBLIC_*`
+ * string. Next.js (and Expo) perform static string replacement at build time —
+ * dynamic access like `process.env[key]` is never replaced.
  */
 export function getFirebaseConfig(): FirebaseEnv {
   const raw = {
-    apiKey: getEnv("NEXT_PUBLIC_FIREBASE_API_KEY", "EXPO_PUBLIC_FIREBASE_API_KEY"),
-    authDomain: getEnv("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN", "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN"),
-    projectId: getEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID", "EXPO_PUBLIC_FIREBASE_PROJECT_ID"),
-    storageBucket: getEnv("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET", "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET"),
-    messagingSenderId: getEnv("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID", "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
-    appId: getEnv("NEXT_PUBLIC_FIREBASE_APP_ID", "EXPO_PUBLIC_FIREBASE_APP_ID"),
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? "",
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? "",
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? "",
   };
 
   const result = firebaseEnvSchema.safeParse(raw);
