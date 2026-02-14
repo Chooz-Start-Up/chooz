@@ -20,6 +20,10 @@ build/
 .env.test.local
 .env.production.local
 
+# Allow per-environment configs (public Firebase client keys only)
+!.env.staging
+!.env.production
+
 # Firebase
 .firebase/
 firebase-debug.log

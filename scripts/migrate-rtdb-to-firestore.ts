@@ -31,7 +31,9 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 // ── Config ──────────────────────────────────────────────────────────
 
-const FIREBASE_DATABASE_URL = "https://chooz-1a9aa-default-rtdb.firebaseio.com";
+const FIREBASE_DATABASE_URL =
+  process.env.FIREBASE_DATABASE_URL ??
+  "https://chooz-1a9aa-default-rtdb.firebaseio.com";
 const DRY_RUN = process.argv.includes("--dry-run");
 
 // ── Types for old RTDB data ─────────────────────────────────────────

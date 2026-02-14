@@ -59,9 +59,50 @@ pnpm dev:web      # Next.js → http://localhost:3000
 pnpm dev:mobile   # Expo → http://localhost:8081
 ```
 
+## Environments
+
+| Environment | Firebase Project | Branch | Deploy trigger |
+|-------------|-----------------|--------|----------------|
+| Staging | `chooz-staging` | `dev` | Push to `dev` |
+| Production | `chooz-prod` | `main` | Push to `main` |
+
+### Switching environments locally
+
+```bash
+# Use staging config
+cp apps/web/.env.staging apps/web/.env.local
+
+# Use production config (read-only testing)
+cp apps/web/.env.production apps/web/.env.local
+```
+
+### Firebase project aliases
+
+```bash
+firebase use staging      # switch CLI to chooz-staging
+firebase use production   # switch CLI to chooz-prod
+```
+
+### Branch workflow
+
+1. Create feature branches from `dev`
+2. Open PRs targeting `dev` — merging triggers a staging deploy
+3. When ready for production, merge `dev` into `main` — triggers a production deploy
+
+### Required GitHub Secrets
+
+| Secret | Description |
+|--------|-------------|
+| `FIREBASE_SA_STAGING` | Service account JSON for `chooz-staging` |
+| `FIREBASE_SA_PRODUCTION` | Service account JSON for `chooz-prod` |
+
 ## Environment Variables
 
-Copy `apps/web/.env.local.example` to `apps/web/.env.local` and fill in your Firebase project values:
+Copy one of the env files to `.env.local` (see above), or copy the example and fill in manually:
+
+```bash
+cp apps/web/.env.local.example apps/web/.env.local
+```
 
 ```
 NEXT_PUBLIC_FIREBASE_API_KEY=

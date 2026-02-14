@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "chooz-1a9aa"
+    "staging": "chooz-staging",
+    "production": "chooz-prod"
   }
 }

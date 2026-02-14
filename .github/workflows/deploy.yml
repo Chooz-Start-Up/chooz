@@ -2,15 +2,16 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [dev, main]
 
 concurrency:
-  group: deploy
+  group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  deploy-functions:
-    name: Deploy Cloud Functions
+  deploy-staging:
+    if: github.ref == 'refs/heads/dev'
+    name: Deploy to Staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,12 +26,45 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Copy staging env
+        run: cp apps/web/.env.staging apps/web/.env.local
+
       - name: Build shared packages
         run: pnpm turbo run build --filter=@chooz/shared --filter=@chooz/functions
 
-      - name: Deploy to Firebase
+      - name: Deploy Functions
         uses: w9jds/firebase-action@v13.22.1
         with:
-          args: deploy --only functions
+          args: deploy --only functions --project chooz-staging
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SA_STAGING }}
+
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Copy production env
+        run: cp apps/web/.env.production apps/web/.env.local
+
+      - name: Build shared packages
+        run: pnpm turbo run build --filter=@chooz/shared --filter=@chooz/functions
+
+      - name: Deploy Functions
+        uses: w9jds/firebase-action@v13.22.1
+        with:
+          args: deploy --only functions --project chooz-prod
+        env:
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SA_PRODUCTION }}

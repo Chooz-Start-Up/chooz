@@ -155,7 +155,20 @@ High-level description of the implementation strategy.
 - Platform: `web-dashboard`, `mobile`, `web-fallback`
 - Domain: `infra`, `search`
 
-## Firebase Project
+## Firebase Projects
 
-- Project ID: `chooz-1a9aa`
-- Emulators: Auth (9099), Functions (5001), Firestore (8080), Storage (9199)
+| Environment | Project ID | Branch | Deploy trigger |
+|-------------|-----------|--------|----------------|
+| Staging | `chooz-staging` | `dev` | Push to `dev` |
+| Production | `chooz-prod` | `main` | Push to `main` |
+
+Legacy project ID: `chooz-1a9aa` (being replaced by the above)
+
+Emulators: Auth (9099), Functions (5001), Firestore (8080), Storage (9199)
+
+## Branch Strategy
+
+- **`dev`** — default development branch, deploys to staging (`chooz-staging`)
+- **`main`** — production branch, deploys to production (`chooz-prod`)
+- Feature branches are created from `dev` and merged back into `dev` via PR
+- `dev` is merged into `main` for production releases
