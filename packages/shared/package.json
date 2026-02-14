@@ -8,7 +8,8 @@
     "build": "tsc --build",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist *.tsbuildinfo"
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run"
   },
   "devDependencies": {
     "typescript": "^5"

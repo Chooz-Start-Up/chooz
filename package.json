@@ -9,11 +9,18 @@
     "dev:mobile": "turbo run dev --filter=@chooz/mobile",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "migrate": "tsx scripts/migrate-rtdb-to-firestore.ts",
+    "migrate:dry": "tsx scripts/migrate-rtdb-to-firestore.ts --dry-run"
   },
   "devDependencies": {
+    "@vitest/browser": "^4.0.18",
+    "jsdom": "^28.0.0",
+    "tsx": "^4.21.0",
     "turbo": "^2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   },
   "packageManager": "pnpm@9.15.4",
   "pnpm": {

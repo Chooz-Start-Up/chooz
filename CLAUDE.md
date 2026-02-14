@@ -131,8 +131,8 @@ Prefixes:
 Every issue must include these four sections:
 
 ```markdown
-## Context
-Why this work is needed. What it relates to. Link to relevant PRD section or prior issues.
+## Description
+Why this work is needed and a summary of what needs to be done. Link to relevant PRD section or prior issues.
 
 ## Completion Criteria
 - [ ] Concrete, verifiable checklist of what "done" looks like
