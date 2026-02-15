@@ -23,7 +23,7 @@ export function usePostLoginRedirect() {
         break;
       case "owner":
       default:
-        router.replace("/edit");
+        router.replace("/profile");
         break;
     }
   }, [loading, firebaseUser, profile, router]);

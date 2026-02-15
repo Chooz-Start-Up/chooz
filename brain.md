@@ -26,6 +26,8 @@
 | Firebase staging/prod config | Done | `.firebaserc` |
 | Owner auth flow (login, register, verify, reset) | Done | `apps/web/app/(auth)/` |
 | Restaurant profile management UI | Done | `apps/web/app/(dashboard)/profile/`, `RestaurantForm.tsx` |
+| Confirm changes dialog | Done | `apps/web/components/restaurant/ConfirmChangesDialog.tsx` |
+| Onboarding flow (welcome + setup) | Done | `apps/web/app/(onboarding)/welcome/`, `apps/web/app/(onboarding)/setup/` |
 | Menu/category/item services | Done (backend) | `packages/services/src/firestore/` |
 | Menu builder UI (drag-drop) | Not started (stub only) | `apps/web/app/(dashboard)/edit/` |
 | Image management UI | Done (on profile page) | `apps/web/components/restaurant/ImageUploadSection.tsx` |
@@ -73,9 +75,11 @@ chooz/
 
 | Component | File | Description |
 |-----------|------|-------------|
-| RestaurantForm | `apps/web/components/RestaurantForm.tsx` | 400+ lines — full profile editing with hours, tags, publish toggle, draft auto-save, dirty tracking |
-| OperatingHoursInput | `apps/web/components/OperatingHoursInput.tsx` | Day-by-day open/close time editor |
-| TagsSelect | `apps/web/components/TagsSelect.tsx` | Multi-select for restaurant tags |
+| RestaurantForm | `apps/web/components/restaurant/RestaurantForm.tsx` | Full profile editing with hours, tags, publish toggle, draft auto-save, dirty tracking. Dual variant: "edit" (sticky bar) and "create" (static button) |
+| ConfirmChangesDialog | `apps/web/components/restaurant/ConfirmChangesDialog.tsx` | Before/after review dialog for profile saves. Shows per-field diffs including detailed hours changes |
+| ImageUploadSection | `apps/web/components/restaurant/ImageUploadSection.tsx` | Banner + logo upload with preview, replace, delete |
+| OperatingHoursInput | `apps/web/components/restaurant/OperatingHoursInput.tsx` | Day-by-day open/close time editor |
+| TagsSelect | `apps/web/components/restaurant/TagsSelect.tsx` | Multi-select for restaurant tags |
 | AuthCard | `apps/web/components/AuthCard.tsx` | Shared auth page layout |
 | OAuthButtons | `apps/web/components/OAuthButtons.tsx` | Google/Facebook/Apple sign-in buttons |
 | AuthGuard | `apps/web/components/AuthGuard.tsx` | Role-based route protection |
@@ -123,6 +127,7 @@ chooz/
 | 21 | Research: owner-to-restaurant 1:many | — | — | — |
 | 22 | Research: multi-location support | — | — | — |
 | 23 | Expand restaurant tag options | 80% | 20% | 0% |
+| 28 | Research: audit log for profile/menu changes | — | — | — |
 
 ### Legacy Issues (chooz-web — `Chooz-Start-Up/chooz-web`)
 
@@ -159,7 +164,11 @@ chooz/
 - **Two repos in play** — `Chooz-Start-Up/chooz` is the monorepo (active development). `Chooz-Start-Up/chooz-web` is the legacy repo. Issues live in both — monorepo issues are the ones that matter.
 - **Legacy app is in `chooz-web/owner-web/`** — CRA, class components, direct Firebase calls. Reference implementation only.
 - **Mobile screens are all stubs** — Expo Router file structure exists but every screen is a placeholder. No mobile UI has been implemented yet.
-- **Web dashboard has stub pages too** — `edit/`, admin routes all return placeholder text. Only auth pages and restaurant profile (including image uploads) are fully built.
+- **Web dashboard has stub pages too** — `edit/`, admin routes all return placeholder text. Only auth pages, restaurant profile (including image uploads), and onboarding flow are fully built.
+- **Three route groups** — `(auth)` for public auth pages, `(dashboard)` for owner-protected pages with sidebar, `(onboarding)` for owner-protected pages without sidebar (welcome, setup).
+- **RestaurantForm has two variants** — `"edit"` shows sticky bar with "View Changes" button (profile page), `"create"` shows centered submit button (setup page).
+- **Publish toggle is gated** — Fields are not required to save/create, but name, description, and phone must be filled to toggle visibility to public. Toggle is proactively disabled with a warning message when fields are missing.
+- **Draft persistence uses value comparison** — Compares against clean snapshot to avoid false drafts from React strict mode double-mounts.
 - **Backend services are ahead of UI** — Most Firestore services (menu, category, item, claim, storage) are fully implemented but have no UI consuming them yet.
 - **Firebase Dynamic Links deprecated** — QR code deep linking needs a replacement solution before Phase 1 launch.
 - **Apple Sign-In required** — Apple requires it if you offer Google/Facebook sign-in on iOS. Must be added for mobile app. OAuthButtons component already includes Apple button.
@@ -203,3 +212,25 @@ chooz/
 - Image uploads are immediate (not tied to form save lifecycle)
 - Storage paths: `restaurants/{id}/banner` and `restaurants/{id}/logo`
 - #8 can be closed on GitHub once verified
+
+### 2026-02-14 — Session 4: Confirm changes dialog, onboarding flow, UX polish
+
+**What was done:**
+- **Confirm changes dialog** — Created `ConfirmChangesDialog.tsx` with `computeChanges()` utility. Shows before/after table when saving profile changes. Supports text, hours (per-day diff), tags, visibility, and image change types. Promise-based flow: form stays dirty if user cancels.
+- **Logout button** — Added to dashboard sidebar, uses `authService.logout()` and redirects to `/login`.
+- **Image upload on setup page** — Pre-generates Firestore document ID so images can upload before restaurant creation. `restaurantStore.createRestaurant` accepts optional pre-generated ID.
+- **Welcome/onboarding page** — New `(onboarding)` route group (auth-protected, no sidebar). `/welcome` page with personalized greeting, onboarding steps, "Start a new restaurant" button, and disabled "Claim existing" button.
+- **Setup page moved** — From `(dashboard)/setup` to `(onboarding)/setup`. No sidebar, centered layout, heading changed to "Set Up Your Restaurant Profile".
+- **RestaurantForm variants** — Added `variant` prop: `"edit"` (sticky bar with "View Changes") vs `"create"` (static "Complete Setup" button).
+- **Validation rework** — Fields no longer required for save/create. Only name, description, and phone required to toggle visibility to public. Publish toggle proactively disabled with warning Alert when fields missing.
+- **Draft persistence fix** — Fixed React strict mode double-mount causing phantom drafts by comparing against clean snapshot instead of render-count ref.
+- **UX polish** — Sticky bar button renamed to "View Changes", draft banner dismissed after successful save, removed browser `beforeunload` popup (drafts auto-persist).
+- **Audit log ticket** — Created GitHub issue #28 (research: audit log for profile/menu changes).
+- Updated `usePostLoginRedirect` to redirect owners to `/profile` instead of `/edit`.
+- Profile page redirects to `/welcome` when no restaurant exists.
+
+**Key context for next session:**
+- Onboarding flow: `/welcome` → `/setup` → `/profile`
+- Claim flow UI not yet built (button exists but disabled with "Coming Soon")
+- Menu builder UI (#7) is the main remaining dashboard feature
+- Audit log (#28) is backlog for future investigation

@@ -59,6 +59,8 @@ interface RestaurantFormProps {
   submitLabel: string;
   submitting: boolean;
   draftKey?: string;
+  /** "edit" shows sticky save bar (default), "create" shows a static submit button at the bottom */
+  variant?: "edit" | "create";
 }
 
 interface DraftFields {
@@ -120,7 +122,7 @@ function serializeFields(f: DraftFields): string {
   return JSON.stringify(f);
 }
 
-export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting, draftKey }: RestaurantFormProps) {
+export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting, draftKey, variant = "edit" }: RestaurantFormProps) {
   const [restoredFromDraft, setRestoredFromDraft] = useState(false);
 
   const [init] = useState<DraftFields>(() => {
@@ -157,28 +159,19 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
   const currentFields: DraftFields = { name, description, phone, street, city, state, zip, hours, tags, isPublished };
   const isDirty = serializeFields(currentFields) !== cleanSnapshot.current;
 
-  // Browser beforeunload warning
-  useEffect(() => {
-    if (!isDirty) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
-  }, [isDirty]);
-
   useEffect(() => {
     if (showDraftBanner) setRestoredFromDraft(true);
   }, [showDraftBanner]);
 
-  const isFirstRender = useRef(!showDraftBanner);
   useEffect(() => {
     if (!draftKey) return;
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+    const draft: DraftFields = { name, description, phone, street, city, state, zip, hours, tags, isPublished };
+    // Only persist a draft when the form is actually dirty — prevents
+    // React strict mode double-mount from writing a no-op draft.
+    if (serializeFields(draft) === cleanSnapshot.current) {
+      localStorage.removeItem(draftKey);
       return;
     }
-    const draft: DraftFields = { name, description, phone, street, city, state, zip, hours, tags, isPublished };
     localStorage.setItem(draftKey, JSON.stringify(draft));
   }, [draftKey, name, description, phone, street, city, state, zip, hours, tags, isPublished]);
 
@@ -198,14 +191,11 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
     setRestoredFromDraft(false);
   }, [draftKey, initialData]);
 
+  /** Format-only validation — always runs on save/create */
   const validate = (): boolean => {
     const next: Record<string, string> = {};
-    if (!name.trim()) next.name = "Restaurant name is required";
-    if (!description.trim()) next.description = "Description is required";
     const phoneDigits = digitsOnly(phone);
-    if (!phoneDigits) {
-      next.phone = "Phone number is required";
-    } else if (phoneDigits.length !== 10) {
+    if (phoneDigits && phoneDigits.length !== 10) {
       next.phone = "Enter a valid 10-digit phone number";
     }
     if (zip.trim() && !ZIP_REGEX.test(zip.trim())) {
@@ -214,6 +204,19 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
     setErrors(next);
     return Object.keys(next).length === 0;
   };
+
+  /** Checks all fields required to go public. Returns error messages or empty array. */
+  const validateForPublish = (): string[] => {
+    const missing: string[] = [];
+    if (!name.trim()) missing.push("Restaurant name");
+    if (!description.trim()) missing.push("Description");
+    if (!digitsOnly(phone)) missing.push("Phone number");
+    return missing;
+  };
+
+  // Proactively compute which fields block publishing
+  const publishBlockedFields = validateForPublish();
+  const canPublish = isPublished || publishBlockedFields.length === 0;
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -234,6 +237,7 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
       // Update clean snapshot so form is no longer dirty
       cleanSnapshot.current = serializeFields(currentFields);
       if (draftKey) localStorage.removeItem(draftKey);
+      setRestoredFromDraft(false);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "An error occurred");
     }
@@ -274,7 +278,6 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
           </Typography>
           <Divider sx={{ mb: 3 }} />
           <TextField
-            required
             fullWidth
             label="Restaurant Name"
             value={name}
@@ -284,7 +287,6 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
             sx={{ mb: 2.5 }}
           />
           <TextField
-            required
             fullWidth
             multiline
             rows={3}
@@ -296,7 +298,6 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
             sx={{ mb: 2.5 }}
           />
           <TextField
-            required
             fullWidth
             label="Phone Number"
             value={phone}
@@ -399,12 +400,20 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
               control={
                 <Switch
                   checked={isPublished}
-                  onChange={() => setPublishDialogOpen(true)}
+                  disabled={!canPublish}
+                  onChange={() => {
+                    setPublishDialogOpen(true);
+                  }}
                 />
               }
               label={isPublished ? "Public" : "Private"}
             />
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {!canPublish && (
+              <Alert severity="warning" sx={{ mt: 1.5 }}>
+                To make your restaurant public, please fill in: {publishBlockedFields.join(", ")}.
+              </Alert>
+            )}
+            <Typography variant="body2" color="text.secondary" sx={{ mt: canPublish ? 1 : 0.5 }}>
               {isPublished
                 ? "Your restaurant is public and visible to customers. They can browse your menu and find you in search results."
                 : "Your restaurant is private and hidden from customers. Use this while you're still setting up your menu or making changes you don't want visible yet."}
@@ -442,58 +451,74 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
         </Dialog>
       </Box>
 
-      {/* Sticky save bar (slides in when form is dirty) */}
-      <Slide direction="up" in={isDirty} mountOnEnter unmountOnExit>
-        <Paper
-          elevation={8}
-          sx={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1200,
-            borderTop: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Box
+      {variant === "edit" ? (
+        /* Sticky save bar (slides in when form is dirty) */
+        <Slide direction="up" in={isDirty} mountOnEnter unmountOnExit>
+          <Paper
+            elevation={8}
             sx={{
-              maxWidth: 720,
-              mx: "auto",
-              px: 3,
-              py: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1200,
+              borderTop: "1px solid",
+              borderColor: "divider",
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              Unsaved changes
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1.5 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={resetToClean}
-                disabled={submitting}
-                sx={{ textTransform: "none" }}
-              >
-                Discard
-              </Button>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => handleSubmit()}
-                disabled={submitting}
-                startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
-                sx={{ textTransform: "none" }}
-              >
-                {submitting ? "Saving..." : submitLabel}
-              </Button>
+            <Box
+              sx={{
+                maxWidth: 720,
+                mx: "auto",
+                px: 3,
+                py: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                Unsaved changes
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={resetToClean}
+                  disabled={submitting}
+                  sx={{ textTransform: "none" }}
+                >
+                  Discard
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => handleSubmit()}
+                  disabled={submitting}
+                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+                  sx={{ textTransform: "none" }}
+                >
+                  {submitting ? "Saving..." : "View Changes"}
+                </Button>
+              </Box>
             </Box>
-          </Box>
-        </Paper>
-      </Slide>
+          </Paper>
+        </Slide>
+      ) : (
+        /* Static submit button for create variant */
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2, pb: 4 }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={() => handleSubmit()}
+            disabled={submitting}
+            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+            sx={{ textTransform: "none", px: 6, py: 1.5 }}
+          >
+            {submitting ? "Creating..." : submitLabel}
+          </Button>
+        </Box>
+      )}
     </>
   );
 }

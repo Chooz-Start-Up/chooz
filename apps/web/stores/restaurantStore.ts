@@ -8,6 +8,7 @@ interface RestaurantState {
   fetchRestaurantForOwner: (ownerUid: string) => Promise<Restaurant | null>;
   createRestaurant: (
     data: Omit<Restaurant, "id" | "createdAt" | "updatedAt">,
+    id?: string,
   ) => Promise<string>;
   updateRestaurant: (
     id: string,
@@ -26,8 +27,8 @@ export const useRestaurantStore = create<RestaurantState>((set) => ({
     return restaurant;
   },
 
-  createRestaurant: async (data) => {
-    const id = restaurantService.generateRestaurantId();
+  createRestaurant: async (data, id?) => {
+    id = id ?? restaurantService.generateRestaurantId();
     await restaurantService.createRestaurant(id, data);
     const created = await restaurantService.getRestaurant(id);
     set({ restaurant: created });

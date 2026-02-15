@@ -42,7 +42,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!loading && !restaurant) {
-      router.replace("/setup");
+      router.replace("/welcome");
     }
   }, [loading, restaurant, router]);
 
