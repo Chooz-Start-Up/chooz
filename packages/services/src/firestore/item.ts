@@ -27,6 +27,11 @@ function itemPath(restaurantId: string, menuId: string, categoryId: string, item
   );
 }
 
+/** Returns a Firestore auto-generated document ID without creating the document. */
+export function generateItemId(restaurantId: string, menuId: string, categoryId: string): string {
+  return doc(collection(getDbInstance(), "restaurants", restaurantId, "menus", menuId, "categories", categoryId, "items")).id;
+}
+
 export async function getItem(
   restaurantId: string,
   menuId: string,

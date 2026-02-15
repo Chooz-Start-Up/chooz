@@ -21,6 +21,11 @@ function categoriesRef(restaurantId: string, menuId: string) {
   ).withConverter(categoryConverter);
 }
 
+/** Returns a Firestore auto-generated document ID without creating the document. */
+export function generateCategoryId(restaurantId: string, menuId: string): string {
+  return doc(collection(getDbInstance(), "restaurants", restaurantId, "menus", menuId, "categories")).id;
+}
+
 export async function getCategory(
   restaurantId: string,
   menuId: string,

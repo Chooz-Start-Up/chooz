@@ -19,6 +19,11 @@ function menusRef(restaurantId: string) {
   return collection(getDbInstance(), "restaurants", restaurantId, "menus").withConverter(menuConverter);
 }
 
+/** Returns a Firestore auto-generated document ID without creating the document. */
+export function generateMenuId(restaurantId: string): string {
+  return doc(collection(getDbInstance(), "restaurants", restaurantId, "menus")).id;
+}
+
 export async function getMenu(restaurantId: string, menuId: string): Promise<Menu | null> {
   try {
     const snap = await getDoc(doc(menusRef(restaurantId), menuId));
