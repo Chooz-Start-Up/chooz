@@ -14,11 +14,32 @@ import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
+import MuiMenuItem from "@mui/material/MenuItem";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import DeleteIcon from "@mui/icons-material/Delete";
+import GrassIcon from "@mui/icons-material/Grass";
+import GrainIcon from "@mui/icons-material/Grain";
 import ImageIcon from "@mui/icons-material/Image";
+import SpaIcon from "@mui/icons-material/Spa";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import WhatshotIcon from "@mui/icons-material/Whatshot";
 import { storageService } from "@chooz/services";
 import type { Item } from "@chooz/shared";
+import { DIETARY_ATTRIBUTES, SPICE_LEVELS } from "@chooz/shared";
+
+const DIETARY_ICON_MAP: Record<string, React.ElementType> = {
+  Spa: SpaIcon,
+  Grass: GrassIcon,
+  Whatshot: WhatshotIcon,
+  Grain: GrainIcon,
+  WarningAmber: WarningAmberIcon,
+  WaterDrop: WaterDropIcon,
+};
 
 type ItemFormData = Omit<Item, "id" | "createdAt" | "updatedAt" | "sortOrder">;
 
@@ -303,6 +324,86 @@ export function ItemEditDialog({ open, restaurantId, item, onClose, onSave }: It
           }}
         />
 
+        {/* Dietary attributes */}
+        <Box>
+          <Typography variant="body2" sx={{ mb: 0.5 }}>
+            Dietary
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {DIETARY_ATTRIBUTES.map((attr) => {
+              const IconComp = DIETARY_ICON_MAP[attr.icon];
+              if (attr.value === "spicy") {
+                const spicyTag = form.tags.find((t) => t.startsWith("spicy-"));
+                const isChecked = !!spicyTag;
+                const currentLevel = spicyTag ? parseInt(spicyTag.split("-")[1], 10) : 1;
+                return (
+                  <Box key={attr.value} sx={{ display: "flex", alignItems: "center" }}>
+                    <FormControlLabel
+                      control={<Checkbox size="small" checked={isChecked} onChange={(e) => {
+                        setForm((f) => {
+                          const tags = f.tags.filter((t) => !t.startsWith("spicy-"));
+                          if (e.target.checked) tags.push("spicy-1");
+                          return { ...f, tags };
+                        });
+                      }} />}
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <IconComp sx={{ fontSize: 16, color: attr.color }} />
+                          <span>{attr.label}</span>
+                        </Box>
+                      }
+                      sx={{ mr: 0 }}
+                    />
+                    {isChecked && (
+                      <FormControl size="small" sx={{ ml: 0.5, minWidth: 56 }}>
+                        <Select
+                          value={currentLevel}
+                          onChange={(e) => {
+                            const level = e.target.value as number;
+                            setForm((f) => ({
+                              ...f,
+                              tags: [...f.tags.filter((t) => !t.startsWith("spicy-")), `spicy-${level}`],
+                            }));
+                          }}
+                          sx={{ height: 28, fontSize: "0.8rem" }}
+                        >
+                          {SPICE_LEVELS.map((lvl) => (
+                            <MuiMenuItem key={lvl} value={lvl}>
+                              {"🌶️".repeat(lvl)}
+                            </MuiMenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
+                  </Box>
+                );
+              }
+
+              const isChecked = form.tags.includes(attr.value);
+              return (
+                <FormControlLabel
+                  key={attr.value}
+                  control={<Checkbox size="small" checked={isChecked} onChange={(e) => {
+                    setForm((f) => ({
+                      ...f,
+                      tags: e.target.checked
+                        ? [...f.tags, attr.value]
+                        : f.tags.filter((t) => t !== attr.value),
+                    }));
+                  }} />}
+                  label={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <IconComp sx={{ fontSize: 16, color: attr.color }} />
+                      <span>{attr.label}</span>
+                    </Box>
+                  }
+                  sx={{ mr: 0 }}
+                />
+              );
+            })}
+          </Box>
+        </Box>
+
         {/* Ingredients chip array */}
         <Box>
           <Typography variant="body2" sx={{ mb: 0.5 }}>
@@ -315,7 +416,7 @@ export function ItemEditDialog({ open, restaurantId, item, onClose, onSave }: It
           </Box>
           <TextField
             size="small"
-            placeholder="Type and press Enter"
+            placeholder="Chicken, garlic, olive oil..."
             value={chipInput.ingredients}
             onChange={(e) => setChipInput((c) => ({ ...c, ingredients: e.target.value }))}
             onKeyDown={(e) => {
@@ -340,7 +441,7 @@ export function ItemEditDialog({ open, restaurantId, item, onClose, onSave }: It
           </Box>
           <TextField
             size="small"
-            placeholder="Type and press Enter"
+            placeholder="Spicy, gluten-free, vegan..."
             value={chipInput.tags}
             onChange={(e) => setChipInput((c) => ({ ...c, tags: e.target.value }))}
             onKeyDown={(e) => {

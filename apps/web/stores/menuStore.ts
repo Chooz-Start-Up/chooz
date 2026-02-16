@@ -12,6 +12,7 @@ interface MenuState {
   // Menu CRUD
   fetchMenus: (restaurantId: string) => Promise<void>;
   createMenu: (restaurantId: string, name: string) => Promise<void>;
+  duplicateMenu: (restaurantId: string, menuId: string) => Promise<void>;
   renameMenu: (restaurantId: string, menuId: string, name: string) => Promise<void>;
   updateMenuSettings: (restaurantId: string, menuId: string, data: Partial<Menu>) => Promise<void>;
   deleteMenu: (restaurantId: string, menuId: string) => Promise<void>;
@@ -79,6 +80,61 @@ export const useMenuStore = create<MenuState>((set, get) => ({
     });
     const menus = await menuService.getMenus(restaurantId);
     set({ menus, selectedMenuId: id });
+  },
+
+  duplicateMenu: async (restaurantId, menuId) => {
+    const sourceMenu = get().menus.find((m) => m.id === menuId);
+    if (!sourceMenu) return;
+
+    // Create the new menu
+    const newMenuId = menuService.generateMenuId(restaurantId);
+    await menuService.createMenu(restaurantId, newMenuId, {
+      name: `${sourceMenu.name} (Copy)`,
+      sortOrder: get().menus.length,
+      isActive: sourceMenu.isActive,
+      availableFrom: sourceMenu.availableFrom,
+      availableTo: sourceMenu.availableTo,
+      availableDays: sourceMenu.availableDays,
+    });
+
+    // Copy categories and items
+    const sourceCats = get().categories[menuId] ?? [];
+    for (const cat of sourceCats) {
+      const newCatId = categoryService.generateCategoryId(restaurantId, newMenuId);
+      await categoryService.createCategory(restaurantId, newMenuId, newCatId, {
+        name: cat.name,
+        description: cat.description,
+        isVisible: cat.isVisible,
+        sortOrder: cat.sortOrder,
+      });
+
+      const sourceItems = get().items[cat.id] ?? [];
+      for (const item of sourceItems) {
+        const newItemId = itemService.generateItemId(restaurantId, newMenuId, newCatId);
+        await itemService.createItem(restaurantId, newMenuId, newCatId, newItemId, {
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          ingredients: [...item.ingredients],
+          tags: [...item.tags],
+          imageUrl: item.imageUrl,
+          isAvailable: item.isAvailable,
+          sortOrder: item.sortOrder,
+        });
+      }
+    }
+
+    // Refresh state and select the new menu
+    const menus = await menuService.getMenus(restaurantId);
+    set({ menus, selectedMenuId: newMenuId });
+
+    // Fetch categories and items for the new menu
+    const newCats = await categoryService.getCategories(restaurantId, newMenuId);
+    set((s) => ({ categories: { ...s.categories, [newMenuId]: newCats } }));
+    for (const cat of newCats) {
+      const catItems = await itemService.getItems(restaurantId, newMenuId, cat.id);
+      set((s) => ({ items: { ...s.items, [cat.id]: catItems } }));
+    }
   },
 
   renameMenu: async (restaurantId, menuId, name) => {

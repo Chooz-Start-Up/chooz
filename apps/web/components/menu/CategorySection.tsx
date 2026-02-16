@@ -169,7 +169,7 @@ export function CategorySection({
             <TextField
               inputRef={quickNameRef}
               size="small"
-              placeholder="Item name"
+              placeholder="Margherita Pizza, Caesar Salad..."
               value={quickName}
               onChange={(e) => setQuickName(e.target.value)}
               onKeyDown={(e) => {

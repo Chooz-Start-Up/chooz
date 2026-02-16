@@ -10,17 +10,33 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import GrassIcon from "@mui/icons-material/Grass";
+import GrainIcon from "@mui/icons-material/Grain";
+import SpaIcon from "@mui/icons-material/Spa";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import WhatshotIcon from "@mui/icons-material/Whatshot";
+import Tooltip from "@mui/material/Tooltip";
 import { Draggable } from "@hello-pangea/dnd";
 import type { Item } from "@chooz/shared";
 import { useState } from "react";
 
+const DIETARY_ICON_MAP: Record<string, { Icon: React.ElementType; color: string; label: string }> = {
+  "vegan": { Icon: SpaIcon, color: "#4caf50", label: "Vegan" },
+  "vegetarian": { Icon: GrassIcon, color: "#8bc34a", label: "Vegetarian" },
+  "gluten-free": { Icon: GrainIcon, color: "#ff9800", label: "Gluten-Free" },
+  "contains-peanuts": { Icon: WarningAmberIcon, color: "#e65100", label: "Contains Peanuts" },
+  "dairy-free": { Icon: WaterDropIcon, color: "#29b6f6", label: "Dairy-Free" },
+};
+
 export const STATUS_BADGES = [
-  { value: "available", label: "Available", color: "success" as const },
+  { value: "available", label: "Available", color: "default" as const },
   { value: "sold-out", label: "Sold Out", color: "error" as const },
   { value: "new", label: "New", color: "info" as const },
-  { value: "best-seller", label: "Best Seller", color: "warning" as const },
+  { value: "best-seller", label: "Best Seller", color: "success" as const },
+  { value: "leaving-soon", label: "Leaving Soon", color: "warning" as const },
   { value: "limited-time", label: "Limited Time", color: "secondary" as const },
 ] as const;
 
@@ -61,6 +77,7 @@ export function ItemCard({ item, index, onEdit, onDelete, onBadgeChange, onToggl
             borderColor: snapshot.isDragging ? "primary.main" : "divider",
             bgcolor: snapshot.isDragging ? "action.hover" : "background.paper",
             mb: 0.5,
+            opacity: item.isAvailable ? 1 : 0.45,
           }}
         >
           {/* Drag handle */}
@@ -68,15 +85,40 @@ export function ItemCard({ item, index, onEdit, onDelete, onBadgeChange, onToggl
             <DragIndicatorIcon fontSize="small" color="action" />
           </Box>
 
-          {/* Name / description */}
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+          {/* Name / description / dietary icons */}
+          <Box sx={{ minWidth: 0, overflow: "hidden" }}>
+            <Typography variant="body2" sx={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {item.name}
             </Typography>
             {item.description && (
-              <Typography variant="caption" color="text.secondary" noWrap>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {item.description}
               </Typography>
+            )}
+            {item.tags.some((t) => t in DIETARY_ICON_MAP || t.startsWith("spicy-")) && (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.25, alignItems: "center", mt: 0.25 }}>
+                {item.tags
+                  .filter((t) => t.startsWith("spicy-"))
+                  .slice(0, 1)
+                  .map((t) => {
+                    const level = parseInt(t.split("-")[1], 10);
+                    return Array.from({ length: level }, (_, i) => (
+                      <Tooltip key={`spicy-${i}`} title={`Spicy (level ${level})`} arrow>
+                        <WhatshotIcon sx={{ fontSize: 16, color: "#f44336" }} />
+                      </Tooltip>
+                    ));
+                  })}
+                {item.tags
+                  .filter((t) => t in DIETARY_ICON_MAP)
+                  .map((t) => {
+                    const { Icon, color, label } = DIETARY_ICON_MAP[t];
+                    return (
+                      <Tooltip key={t} title={label} arrow>
+                        <Icon sx={{ fontSize: 16, color }} />
+                      </Tooltip>
+                    );
+                  })}
+              </Box>
             )}
           </Box>
 
@@ -90,13 +132,17 @@ export function ItemCard({ item, index, onEdit, onDelete, onBadgeChange, onToggl
             <Chip
               label={badge.label}
               size="small"
-              color={badge.value === "limited-time" ? undefined : badge.color}
+              color={badge.value === "limited-time" || badge.value === "available" ? undefined : badge.color}
               variant="outlined"
               deleteIcon={<ArrowDropDownIcon />}
               onDelete={(e) => setAnchorEl(e.currentTarget.closest(".MuiChip-root") as HTMLElement)}
               onClick={(e) => setAnchorEl(e.currentTarget)}
               sx={{
                 cursor: "pointer",
+                ...(badge.value === "available" && {
+                  color: "text.primary",
+                  borderColor: "text.primary",
+                }),
                 ...(badge.value === "limited-time" && {
                   color: "#e91e8a",
                   borderColor: "#e91e8a",

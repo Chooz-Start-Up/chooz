@@ -2,6 +2,8 @@
 
 > **Before contributing code, read `brain.md`** — it contains current project state, decisions made, gotchas, and a session log. Update it after every meaningful session.
 
+> **Before making any code changes**, run `git fetch origin && git status` to check if the local branch is up to date with the remote. If the branch is behind, pull the latest changes before proceeding.
+
 ## What is this project?
 
 Chooz is a restaurant menu discovery platform. Restaurant owners publish menus via a web dashboard, customers browse and search menus via a mobile app. A web fallback provides read-only access for users without the app.

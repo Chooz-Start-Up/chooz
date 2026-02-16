@@ -86,8 +86,8 @@ chooz/
 | MenuSettingsPanel | `apps/web/components/menu/MenuSettingsPanel.tsx` | Menu visibility toggle, time availability, day chips |
 | CategoryList | `apps/web/components/menu/CategoryList.tsx` | Droppable list of CategorySections + "Add Category" |
 | CategorySection | `apps/web/components/menu/CategorySection.tsx` | Category card: drag-drop items, inline quick-add, settings popover |
-| ItemCard | `apps/web/components/menu/ItemCard.tsx` | Item row: CSS grid layout, thumbnail, status badge dropdown, visibility toggle, edit/delete |
-| ItemEditDialog | `apps/web/components/menu/ItemEditDialog.tsx` | Create/edit dialog with image upload, Save & Add Another |
+| ItemCard | `apps/web/components/menu/ItemCard.tsx` | Item row: CSS grid layout, thumbnail, dietary icons under description, status badge dropdown, visibility toggle, edit/delete |
+| ItemEditDialog | `apps/web/components/menu/ItemEditDialog.tsx` | Create/edit dialog with image upload, dietary checkboxes (with spice level), Save & Add Another |
 | InlineEdit | `apps/web/components/menu/InlineEdit.tsx` | Click-to-edit text component |
 | DeleteConfirmDialog | `apps/web/components/menu/DeleteConfirmDialog.tsx` | Type-to-confirm deletion with cascade warnings |
 | AuthGuard | `apps/web/components/AuthGuard.tsx` | Role-based route protection |
@@ -185,6 +185,8 @@ chooz/
 - **Legacy data is in Realtime Database** — migration script exists but hasn't been run against production data yet.
 - **MUI 5 uses InputLabelProps, not slotProps** — TextField `slotProps` is MUI 6+. Use `InputLabelProps={{ shrink: true }}` and `InputProps` for adornments.
 - **Item visibility vs status badges are independent** — `isAvailable` controls whether the item shows on the customer menu at all. Status badges (Sold Out, New, etc.) are stored in the `tags[]` array and are visual indicators only. Changing a badge must NOT change `isAvailable`.
+- **Dietary attributes are also stored in `tags[]`** — Values like `"vegan"`, `"vegetarian"`, `"spicy-2"` coexist with status badges in the same array. The `DIETARY_ATTRIBUTES` constant in `@chooz/shared` defines the canonical list. Spicy levels are mutually exclusive (`"spicy-1"` through `"spicy-3"` — only one stored at a time).
+- **`@mui/icons-material/Eco` does not exist** — Use `Grass` instead for vegetarian icon. The installed MUI 5 version doesn't include the `Eco` icon.
 - **Category type has `isVisible` field** — Added in the menu builder session. Controls whether the category appears on the customer menu. Existing categories in Firestore may not have this field — converters should handle the default.
 
 ---
@@ -308,3 +310,25 @@ chooz/
 - #26 (profile image verification) and #31 (image refinements) are still open and unrelated to this work
 - Item images use a different storage path pattern than banner/logo (`items/{uuid}` vs `banner`/`logo`)
 - The immediate upload pattern means orphaned images can exist if user uploads then cancels without saving — #31's deferred persistence would fix this
+
+### 2026-02-15 — Session 7: Dietary attribute checkboxes for menu items
+
+**What was done:**
+- **Shared constants** — Created `packages/shared/src/constants/dietary.ts` with `DIETARY_ATTRIBUTES` (6 attributes: vegan, vegetarian, spicy, gluten-free, contains-peanuts, dairy-free) and `SPICE_LEVELS` (1–3). Exported from `packages/shared/src/index.ts`.
+- **Dietary checkboxes in ItemEditDialog** — Added "Dietary" section after Price, before Ingredients. Each attribute has a colored MUI icon + checkbox. Spicy has an inline dropdown for levels 1–3 (rendered as pepper emojis). Checking/unchecking manages `form.tags[]`.
+- **Dietary icons in ItemCard** — Icons render under the item description text (not in a separate column). Colored MUI icons with tooltips. Spicy renders 1–3 flame icons based on level. Only shows when dietary tags exist.
+- **Layout fixes** — Added `overflow: hidden` + `textOverflow: ellipsis` to name/description to prevent overflow into adjacent grid columns. Removed separate dietary column in favor of inline display under description.
+- No type changes, no service changes, no Firestore rule changes. `pnpm typecheck` passes.
+
+**Key design decisions:**
+- Dietary attributes reuse the existing `tags[]` field — no schema changes needed
+- Spicy levels are mutually exclusive: only one `"spicy-N"` tag stored at a time
+- Icon mapping lives in the React components (not shared) to keep `@chooz/shared` dependency-free
+- Used `Grass` icon instead of `Eco` (doesn't exist in installed MUI version)
+- "Nut-Free" was removed per user feedback (6 attributes instead of 7)
+
+**Key context for next session:**
+- No ticket exists for this feature
+- #26 and #25 (Firebase Storage) still block profile image verification
+- #31 (image refinements) still open
+- Consider adding dietary icons to the mobile menu viewer when building #14

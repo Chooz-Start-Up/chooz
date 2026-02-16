@@ -22,6 +22,7 @@ export default function MenuEditPage() {
     loading,
     fetchMenus,
     createMenu,
+    duplicateMenu,
     renameMenu,
     updateMenuSettings,
     deleteMenu,
@@ -146,6 +147,7 @@ export default function MenuEditPage() {
           selectedMenuId={selectedMenuId}
           onSelect={selectMenu}
           onAdd={(name) => createMenu(restaurant.id, name)}
+          onDuplicate={(menuId) => duplicateMenu(restaurant.id, menuId)}
           onRename={(menuId, name) => renameMenu(restaurant.id, menuId, name)}
           onDelete={(menuId) => deleteMenu(restaurant.id, menuId)}
           onUpdateSettings={(menuId, data) => updateMenuSettings(restaurant.id, menuId, data)}

@@ -76,7 +76,7 @@ export function CategoryList({
             <TextField
               autoFocus
               size="small"
-              placeholder="e.g. Appetizers, Entrees, Desserts"
+              placeholder="Appetizers, Entrees, Desserts"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {

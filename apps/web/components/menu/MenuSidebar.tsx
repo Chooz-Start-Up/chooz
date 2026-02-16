@@ -13,6 +13,7 @@ import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import TextField from "@mui/material/TextField";
 import AddIcon from "@mui/icons-material/Add";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import SettingsIcon from "@mui/icons-material/Settings";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -27,6 +28,7 @@ interface MenuSidebarProps {
   selectedMenuId: string | null;
   onSelect: (menuId: string) => void;
   onAdd: (name: string) => Promise<void>;
+  onDuplicate: (menuId: string) => Promise<void>;
   onRename: (menuId: string, name: string) => Promise<void>;
   onDelete: (menuId: string) => Promise<void>;
   onUpdateSettings: (menuId: string, data: Partial<Menu>) => Promise<void>;
@@ -38,6 +40,7 @@ export function MenuSidebar({
   selectedMenuId,
   onSelect,
   onAdd,
+  onDuplicate,
   onRename,
   onDelete,
   onUpdateSettings,
@@ -158,7 +161,7 @@ export function MenuSidebar({
             <TextField
               autoFocus
               size="small"
-              placeholder="e.g. Lunch, Dinner, Drinks"
+              placeholder="Lunch, Dinner, Drinks"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
@@ -223,8 +226,24 @@ export function MenuSidebar({
 
             <Divider />
 
+            {/* Duplicate section */}
+            <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                fullWidth
+                startIcon={<ContentCopyIcon />}
+                onClick={() => {
+                  handleCloseSettings();
+                  onDuplicate(settingsMenu.id);
+                }}
+              >
+                Duplicate Menu
+              </Button>
+            </Box>
+
             {/* Delete section */}
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ px: 2, pb: 2 }}>
               <Button
                 color="error"
                 variant="outlined"
