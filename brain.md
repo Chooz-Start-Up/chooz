@@ -7,7 +7,7 @@
 ## Current State
 
 **Phase:** Phase 0 complete, Phase 1 in progress
-**Status:** Monorepo scaffolded and operational. Owner auth flow and restaurant profile management shipped. Mobile app and remaining dashboard features in progress.
+**Status:** Monorepo scaffolded and operational. Owner auth flow, restaurant profile management, and menu builder shipped. Mobile app and remaining dashboard features in progress.
 
 ### What exists today
 
@@ -29,7 +29,7 @@
 | Confirm changes dialog | Done | `apps/web/components/restaurant/ConfirmChangesDialog.tsx` |
 | Onboarding flow (welcome + setup) | Done | `apps/web/app/(onboarding)/welcome/`, `apps/web/app/(onboarding)/setup/` |
 | Menu/category/item services | Done (backend) | `packages/services/src/firestore/` |
-| Menu builder UI (drag-drop) | Not started (stub only) | `apps/web/app/(dashboard)/edit/` |
+| Menu builder UI (drag-drop) | Done | `apps/web/app/(dashboard)/edit/`, `apps/web/components/menu/` |
 | Image management UI | Done (on profile page) | `apps/web/components/restaurant/ImageUploadSection.tsx` |
 | Claim flow services | Done (backend) | `packages/services/src/firestore/claim.ts` |
 | Claim flow UI | Not started | — |
@@ -67,7 +67,7 @@ chooz/
 | Category | `packages/services/src/firestore/category.ts` | Full CRUD for categories |
 | Item | `packages/services/src/firestore/item.ts` | Full CRUD for items |
 | Claim | `packages/services/src/firestore/claim.ts` | Create, review, status tracking |
-| Storage | `packages/services/src/storage/` | Banner/logo upload and delete |
+| Storage | `packages/services/src/storage/` | Banner/logo/item image upload and delete, URL-based deletion |
 | Env validation | `packages/services/src/env.ts` | Zod schema for Firebase config |
 | Error handling | `packages/services/src/errors.ts` | AppError with typed codes |
 
@@ -82,6 +82,14 @@ chooz/
 | TagsSelect | `apps/web/components/restaurant/TagsSelect.tsx` | Multi-select for restaurant tags |
 | AuthCard | `apps/web/components/AuthCard.tsx` | Shared auth page layout |
 | OAuthButtons | `apps/web/components/OAuthButtons.tsx` | Google/Facebook/Apple sign-in buttons |
+| MenuSidebar | `apps/web/components/menu/MenuSidebar.tsx` | Left panel: draggable menu list, settings popover (rename, visibility, availability, delete) |
+| MenuSettingsPanel | `apps/web/components/menu/MenuSettingsPanel.tsx` | Menu visibility toggle, time availability, day chips |
+| CategoryList | `apps/web/components/menu/CategoryList.tsx` | Droppable list of CategorySections + "Add Category" |
+| CategorySection | `apps/web/components/menu/CategorySection.tsx` | Category card: drag-drop items, inline quick-add, settings popover |
+| ItemCard | `apps/web/components/menu/ItemCard.tsx` | Item row: CSS grid layout, thumbnail, status badge dropdown, visibility toggle, edit/delete |
+| ItemEditDialog | `apps/web/components/menu/ItemEditDialog.tsx` | Create/edit dialog with image upload, Save & Add Another |
+| InlineEdit | `apps/web/components/menu/InlineEdit.tsx` | Click-to-edit text component |
+| DeleteConfirmDialog | `apps/web/components/menu/DeleteConfirmDialog.tsx` | Type-to-confirm deletion with cascade warnings |
 | AuthGuard | `apps/web/components/AuthGuard.tsx` | Role-based route protection |
 | AuthProvider | `apps/web/components/AuthProvider.tsx` | Firebase auth state listener |
 
@@ -95,7 +103,7 @@ chooz/
 
 ### GitHub Issues (Monorepo — `Chooz-Start-Up/chooz`)
 
-**Closed (7):**
+**Closed (8):**
 
 | # | Title |
 |---|-------|
@@ -105,12 +113,12 @@ chooz/
 | 4 | infra: Migrate data from Realtime DB to Firestore |
 | 5 | feat: Owner auth flow |
 | 6 | feat: Restaurant profile management UI |
+| 7 | feat: Menu builder with drag-drop reordering |
 
-**Open (17):**
+**Open (18):**
 
 | # | Title | Backend | Web UI | Mobile UI |
 |---|-------|---------|--------|-----------|
-| 7 | Menu builder with drag-drop | 100% | 0% (stub) | — |
 | 8 | Image management (banner + logo) | 100% | 100% | — |
 | 9 | QR code generation and share | 0% | 0% | 0% |
 | 10 | Claim restaurant flow | 80% | 0% | — |
@@ -128,6 +136,8 @@ chooz/
 | 22 | Research: multi-location support | — | — | — |
 | 23 | Expand restaurant tag options | 80% | 20% | 0% |
 | 28 | Research: audit log for profile/menu changes | — | — | — |
+| 29 | Import menu from image or PDF upload | 0% | 0% | — |
+| 30 | Auto-generate item tags from name/description | 0% | 0% | — |
 
 ### Legacy Issues (chooz-web — `Chooz-Start-Up/chooz-web`)
 
@@ -164,7 +174,7 @@ chooz/
 - **Two repos in play** — `Chooz-Start-Up/chooz` is the monorepo (active development). `Chooz-Start-Up/chooz-web` is the legacy repo. Issues live in both — monorepo issues are the ones that matter.
 - **Legacy app is in `chooz-web/owner-web/`** — CRA, class components, direct Firebase calls. Reference implementation only.
 - **Mobile screens are all stubs** — Expo Router file structure exists but every screen is a placeholder. No mobile UI has been implemented yet.
-- **Web dashboard has stub pages too** — `edit/`, admin routes all return placeholder text. Only auth pages, restaurant profile (including image uploads), and onboarding flow are fully built.
+- **Web dashboard has stub pages too** — Admin routes return placeholder text. Auth pages, restaurant profile (including image uploads), onboarding flow, and menu builder are fully built.
 - **Three route groups** — `(auth)` for public auth pages, `(dashboard)` for owner-protected pages with sidebar, `(onboarding)` for owner-protected pages without sidebar (welcome, setup).
 - **RestaurantForm has two variants** — `"edit"` shows sticky bar with "View Changes" button (profile page), `"create"` shows centered submit button (setup page).
 - **Publish toggle is gated** — Fields are not required to save/create, but name, description, and phone must be filled to toggle visibility to public. Toggle is proactively disabled with a warning message when fields are missing.
@@ -173,6 +183,9 @@ chooz/
 - **Firebase Dynamic Links deprecated** — QR code deep linking needs a replacement solution before Phase 1 launch.
 - **Apple Sign-In required** — Apple requires it if you offer Google/Facebook sign-in on iOS. Must be added for mobile app. OAuthButtons component already includes Apple button.
 - **Legacy data is in Realtime Database** — migration script exists but hasn't been run against production data yet.
+- **MUI 5 uses InputLabelProps, not slotProps** — TextField `slotProps` is MUI 6+. Use `InputLabelProps={{ shrink: true }}` and `InputProps` for adornments.
+- **Item visibility vs status badges are independent** — `isAvailable` controls whether the item shows on the customer menu at all. Status badges (Sold Out, New, etc.) are stored in the `tags[]` array and are visual indicators only. Changing a badge must NOT change `isAvailable`.
+- **Category type has `isVisible` field** — Added in the menu builder session. Controls whether the category appears on the customer menu. Existing categories in Firestore may not have this field — converters should handle the default.
 
 ---
 
@@ -234,3 +247,64 @@ chooz/
 - Claim flow UI not yet built (button exists but disabled with "Coming Soon")
 - Menu builder UI (#7) is the main remaining dashboard feature
 - Audit log (#28) is backlog for future investigation
+
+### 2026-02-15 — Session 5: Menu builder with drag-drop reordering
+
+**What was done:**
+- **Full menu builder UI** (Issue #7) — implemented 8 new components and rewrote the edit page + menuStore:
+  - Two-panel layout: 280px draggable sidebar + content area (`height: 100vh, m: -4`)
+  - `MenuSidebar` — draggable menu list, cog icon opens Popover with rename (InlineEdit), MenuSettingsPanel, and delete
+  - `MenuSettingsPanel` — "Visible on Menu" switch (`isActive`), "All Day" checkbox + time inputs, day chips with DAY_LABELS lookup
+  - `CategoryList` + `CategorySection` — draggable categories, cog icon for settings (rename, visibility, delete)
+  - `ItemCard` — CSS grid layout (`24px 1fr 72px 120px 96px`), status badge dropdown, visibility eye icon, edit/delete
+  - `ItemEditDialog` — name, description, price (2-decimal enforcement), ingredients, tags, "Save & Add Another"
+  - Inline quick-add row per category: name + price + Add button + Full Form button
+  - `DeleteConfirmDialog` — type-to-confirm for categories and menus, cascade breakdown with bullet list
+  - `InlineEdit` — click-to-edit with spinner
+- **Zustand menuStore rewrite** — full CRUD + reorder for menus/categories/items, optimistic updates with rollback
+- **Service layer** — added `generateMenuId`, `generateCategoryId`, `generateItemId`
+- **Shared types** — added `isVisible: boolean` to `Category` type
+- **Bug fix** — badge change no longer sets `isAvailable` (visibility and status badges are independent)
+- **Created tickets** — #29 (import menu from image/PDF) and #30 (auto-generate item tags)
+- **Closed** — #7
+
+**Key design decisions:**
+- Status badges stored in `tags[]` array, independent from `isAvailable` (visibility)
+- Visibility indicators: dimmed text (50% opacity) + VisibilityOff icon on hidden menus/categories
+- Single `DragDropContext` dispatches by type: MENU, CATEGORY, ITEM
+- Items cannot drag across categories (v1 constraint)
+
+**Key context for next session:**
+- Core owner dashboard features are done: auth, profile, menu builder
+- Firebase Storage (#25) blocks image upload verification (#26)
+- Claim flow (#10), admin dashboard (#11), and customer-facing features are next
+- Nice-to-haves: #29 (menu import from image), #30 (auto-tag items), #23 (expand tags)
+
+### 2026-02-15 — Session 6: Item image upload in menu builder
+
+**What was done:**
+- **Storage helpers** — Added `uploadItemImage(restaurantId, imageId, file)` and `deleteImageByUrl(url)` to `packages/services/src/storage/index.ts`. `deleteImageByUrl` parses the storage path from a Firebase download URL's `/o/` segment for generic cleanup.
+- **Item image upload UI** — Full image upload flow in `ItemEditDialog.tsx`:
+  - Full-width image area at the top of the dialog (above Name field)
+  - Dashed placeholder with camera icon when no image; full-width 200px preview when image exists
+  - Replace (photo icon) and delete (trash icon) overlay buttons on preview
+  - Delete confirmation dialog with image preview before removal
+  - 5 MB file size validation, image MIME type validation, spinner overlay during operations
+  - Immediate upload pattern (same as profile banner/logo)
+  - Image state resets on "Save & Add Another"
+- **Thumbnail in item list** — Added 36x36 rounded thumbnail to `ItemCard` grid, positioned between the status badge and action buttons
+- **Image cleanup on deletion** — `menuStore.ts` now cleans up storage images (best-effort) when deleting items, categories, or menus
+- **Prop threading** — `restaurantId` threaded from `edit/page.tsx` → `CategoryList` → `CategorySection` → `ItemEditDialog`
+- No new files, no type changes, no storage rule changes. `pnpm typecheck` passes.
+
+**Key design decisions:**
+- Image upload works in both create and edit mode (unlike profile images which require an existing document)
+- Uses `crypto.randomUUID()` for storage paths: `restaurants/{rid}/items/{uuid}`
+- `deleteImageByUrl` allows cleanup without knowing the original path structure
+- Image cleanup on delete is best-effort (try/catch, non-blocking) — doesn't prevent Firestore deletion if storage cleanup fails
+
+**Key context for next session:**
+- No ticket existed for this feature — consider creating one retroactively if tracking matters
+- #26 (profile image verification) and #31 (image refinements) are still open and unrelated to this work
+- Item images use a different storage path pattern than banner/logo (`items/{uuid}` vs `banner`/`logo`)
+- The immediate upload pattern means orphaned images can exist if user uploads then cancels without saving — #31's deferred persistence would fix this

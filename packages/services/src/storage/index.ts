@@ -52,3 +52,28 @@ export function deleteBanner(restaurantId: string) {
 export function deleteLogo(restaurantId: string) {
   return deleteImage(`restaurants/${restaurantId}/logo`);
 }
+
+// Item images
+export function uploadItemImage(
+  restaurantId: string,
+  imageId: string,
+  file: Blob | Uint8Array | ArrayBuffer,
+) {
+  return uploadImage(`restaurants/${restaurantId}/items/${imageId}`, file);
+}
+
+/**
+ * Delete a storage object by its Firebase download URL.
+ * Firebase download URLs encode the storage path in the `/o/` segment.
+ */
+export async function deleteImageByUrl(url: string): Promise<void> {
+  try {
+    const urlObj = new URL(url);
+    const encoded = urlObj.pathname.split("/o/")[1];
+    if (!encoded) return;
+    const path = decodeURIComponent(encoded);
+    await deleteObject(ref(getStorageInstance(), path));
+  } catch (error) {
+    throw toAppError(error);
+  }
+}

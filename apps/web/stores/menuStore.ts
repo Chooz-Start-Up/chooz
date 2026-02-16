@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Menu, Category, Item } from "@chooz/shared";
-import { menuService, categoryService, itemService } from "@chooz/services";
+import { menuService, categoryService, itemService, storageService } from "@chooz/services";
 
 interface MenuState {
   menus: Menu[];
@@ -119,6 +119,9 @@ export const useMenuStore = create<MenuState>((set, get) => ({
     for (const cat of cats) {
       const catItems = items[cat.id] ?? [];
       for (const item of catItems) {
+        if (item.imageUrl) {
+          try { await storageService.deleteImageByUrl(item.imageUrl); } catch { /* best-effort */ }
+        }
         await itemService.deleteItem(restaurantId, menuId, cat.id, item.id);
       }
       await categoryService.deleteCategory(restaurantId, menuId, cat.id);
@@ -222,6 +225,9 @@ export const useMenuStore = create<MenuState>((set, get) => ({
   deleteCategory: async (restaurantId, menuId, catId) => {
     const catItems = get().items[catId] ?? [];
     for (const item of catItems) {
+      if (item.imageUrl) {
+        try { await storageService.deleteImageByUrl(item.imageUrl); } catch { /* best-effort */ }
+      }
       await itemService.deleteItem(restaurantId, menuId, catId, item.id);
     }
     await categoryService.deleteCategory(restaurantId, menuId, catId);
@@ -283,6 +289,10 @@ export const useMenuStore = create<MenuState>((set, get) => ({
   },
 
   deleteItem: async (restaurantId, menuId, catId, itemId) => {
+    const targetItem = (get().items[catId] ?? []).find((i) => i.id === itemId);
+    if (targetItem?.imageUrl) {
+      try { await storageService.deleteImageByUrl(targetItem.imageUrl); } catch { /* best-effort */ }
+    }
     await itemService.deleteItem(restaurantId, menuId, catId, itemId);
     set((s) => ({
       items: {

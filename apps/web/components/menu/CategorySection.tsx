@@ -24,6 +24,7 @@ import { ItemCard, STATUS_BADGES } from "./ItemCard";
 import { ItemEditDialog } from "./ItemEditDialog";
 
 interface CategorySectionProps {
+  restaurantId: string;
   category: Category;
   index: number;
   items: Item[];
@@ -36,6 +37,7 @@ interface CategorySectionProps {
 }
 
 export function CategorySection({
+  restaurantId,
   category,
   index,
   items,
@@ -280,6 +282,7 @@ export function CategorySection({
           {/* Create/Edit item dialog */}
           <ItemEditDialog
             open={createItemOpen || !!editingItem}
+            restaurantId={restaurantId}
             item={editingItem}
             onClose={() => {
               setCreateItemOpen(false);

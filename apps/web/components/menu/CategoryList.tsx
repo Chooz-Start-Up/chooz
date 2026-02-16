@@ -10,6 +10,7 @@ import type { Category, Item } from "@chooz/shared";
 import { CategorySection } from "./CategorySection";
 
 interface CategoryListProps {
+  restaurantId: string;
   categories: Category[];
   items: Record<string, Item[]>; // keyed by categoryId
   onAddCategory: (name: string) => Promise<void>;
@@ -22,6 +23,7 @@ interface CategoryListProps {
 }
 
 export function CategoryList({
+  restaurantId,
   categories,
   items,
   onAddCategory,
@@ -51,6 +53,7 @@ export function CategoryList({
             {categories.map((cat, idx) => (
               <CategorySection
                 key={cat.id}
+                restaurantId={restaurantId}
                 category={cat}
                 index={idx}
                 items={items[cat.id] ?? []}

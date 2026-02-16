@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -9,15 +10,21 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ImageIcon from "@mui/icons-material/Image";
+import { storageService } from "@chooz/services";
 import type { Item } from "@chooz/shared";
 
 type ItemFormData = Omit<Item, "id" | "createdAt" | "updatedAt" | "sortOrder">;
 
 interface ItemEditDialogProps {
   open: boolean;
+  restaurantId: string;
   item: Item | null; // null = create mode
   onClose: () => void;
   onSave: (data: ItemFormData) => Promise<void>;
@@ -33,12 +40,18 @@ const emptyForm: ItemFormData = {
   isAvailable: true,
 };
 
-export function ItemEditDialog({ open, item, onClose, onSave }: ItemEditDialogProps) {
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+export function ItemEditDialog({ open, restaurantId, item, onClose, onSave }: ItemEditDialogProps) {
   const [form, setForm] = useState<ItemFormData>(emptyForm);
   const [priceText, setPriceText] = useState("0.00");
   const [saving, setSaving] = useState(false);
   const [chipInput, setChipInput] = useState({ ingredients: "", tags: "" });
   const nameRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [deleteImageConfirm, setDeleteImageConfirm] = useState(false);
 
   const isCreate = !item;
 
@@ -60,8 +73,56 @@ export function ItemEditDialog({ open, item, onClose, onSave }: ItemEditDialogPr
         setPriceText("0.00");
       }
       setChipInput({ ingredients: "", tags: "" });
+      setImageError(null);
+      setDeleteImageConfirm(false);
     }
   }, [open, item]);
+
+  const handleImageSelect = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setImageError("Please select an image file.");
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      setImageError("Image must be under 5 MB.");
+      return;
+    }
+
+    setImageError(null);
+    setImageLoading(true);
+    try {
+      // Delete old image if replacing
+      if (form.imageUrl) {
+        try {
+          await storageService.deleteImageByUrl(form.imageUrl);
+        } catch {
+          // Best-effort cleanup
+        }
+      }
+      const imageId = crypto.randomUUID();
+      const url = await storageService.uploadItemImage(restaurantId, imageId, file);
+      setForm((f) => ({ ...f, imageUrl: url }));
+    } catch {
+      setImageError("Failed to upload image. Please try again.");
+    } finally {
+      setImageLoading(false);
+      // Reset file input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImageRemove = async () => {
+    if (!form.imageUrl) return;
+    setImageLoading(true);
+    setImageError(null);
+    try {
+      await storageService.deleteImageByUrl(form.imageUrl);
+    } catch {
+      // Best-effort cleanup
+    }
+    setForm((f) => ({ ...f, imageUrl: null }));
+    setImageLoading(false);
+  };
 
   const doSave = async (keepOpen: boolean) => {
     if (!form.name.trim()) return;
@@ -73,6 +134,7 @@ export function ItemEditDialog({ open, item, onClose, onSave }: ItemEditDialogPr
         setForm(emptyForm);
         setPriceText("0.00");
         setChipInput({ ingredients: "", tags: "" });
+        setImageError(null);
         // Re-focus name field
         setTimeout(() => nameRef.current?.focus(), 50);
       } else {
@@ -105,9 +167,110 @@ export function ItemEditDialog({ open, item, onClose, onSave }: ItemEditDialogPr
   };
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={saving || imageLoading ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{item ? "Edit Item" : "New Item"}</DialogTitle>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "8px !important" }}>
+        {/* Image upload */}
+        <Box>
+          {imageError && (
+            <Alert severity="error" onClose={() => setImageError(null)} sx={{ mb: 1 }}>
+              {imageError}
+            </Alert>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageSelect(file);
+            }}
+          />
+
+          {form.imageUrl ? (
+            <Box sx={{ position: "relative", width: "100%", height: 200 }}>
+              <Box
+                component="img"
+                src={form.imageUrl}
+                alt="Item image"
+                sx={{
+                  width: "100%",
+                  height: 200,
+                  objectFit: "cover",
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              />
+              {imageLoading && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: "rgba(0,0,0,0.4)",
+                    borderRadius: 1,
+                  }}
+                >
+                  <CircularProgress size={28} sx={{ color: "white" }} />
+                </Box>
+              )}
+              {!imageLoading && (
+                <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 0.5 }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Replace image"
+                    sx={{ bgcolor: "rgba(255,255,255,0.85)", "&:hover": { bgcolor: "white" } }}
+                  >
+                    <ImageIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => setDeleteImageConfirm(true)}
+                    title="Remove image"
+                    sx={{ bgcolor: "rgba(255,255,255,0.85)", "&:hover": { bgcolor: "white" } }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
+            </Box>
+          ) : (
+            <Box
+              onClick={() => !imageLoading && fileInputRef.current?.click()}
+              sx={{
+                width: "100%",
+                height: 120,
+                border: "2px dashed",
+                borderColor: "divider",
+                borderRadius: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: imageLoading ? "default" : "pointer",
+                "&:hover": imageLoading ? {} : { borderColor: "primary.main", bgcolor: "action.hover" },
+              }}
+            >
+              {imageLoading ? (
+                <CircularProgress size={28} />
+              ) : (
+                <>
+                  <CameraAltIcon color="action" />
+                  <Typography variant="caption" color="text.secondary">
+                    Add photo
+                  </Typography>
+                </>
+              )}
+            </Box>
+          )}
+        </Box>
+
         <TextField
           inputRef={nameRef}
           label="Name"
@@ -191,14 +354,14 @@ export function ItemEditDialog({ open, item, onClose, onSave }: ItemEditDialogPr
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={saving}>
+        <Button onClick={onClose} disabled={saving || imageLoading}>
           Cancel
         </Button>
         {isCreate && (
           <Button
             onClick={() => doSave(true)}
             variant="outlined"
-            disabled={saving || !form.name.trim()}
+            disabled={saving || imageLoading || !form.name.trim()}
           >
             {saving ? <CircularProgress size={20} color="inherit" /> : "Save & Add Another"}
           </Button>
@@ -206,11 +369,49 @@ export function ItemEditDialog({ open, item, onClose, onSave }: ItemEditDialogPr
         <Button
           onClick={() => doSave(false)}
           variant="contained"
-          disabled={saving || !form.name.trim()}
+          disabled={saving || imageLoading || !form.name.trim()}
         >
           {saving ? <CircularProgress size={20} color="inherit" /> : item ? "Save" : "Create"}
         </Button>
       </DialogActions>
+
+      {/* Delete image confirmation */}
+      <Dialog open={deleteImageConfirm} onClose={() => setDeleteImageConfirm(false)} maxWidth="xs">
+        <DialogTitle>Remove Image</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Are you sure you want to remove this image?
+          </Typography>
+          {form.imageUrl && (
+            <Box
+              component="img"
+              src={form.imageUrl}
+              alt="Image to remove"
+              sx={{
+                width: "100%",
+                maxHeight: 200,
+                objectFit: "cover",
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteImageConfirm(false)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={async () => {
+              setDeleteImageConfirm(false);
+              await handleImageRemove();
+            }}
+          >
+            Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

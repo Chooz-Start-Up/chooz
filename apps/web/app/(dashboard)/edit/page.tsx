@@ -183,6 +183,7 @@ export default function MenuEditPage() {
               </Typography>
 
               <CategoryList
+                restaurantId={restaurant.id}
                 categories={currentCategories}
                 items={items}
                 onAddCategory={(name) => createCategory(restaurant.id, selectedMenuId!, name)}

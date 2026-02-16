@@ -51,7 +51,7 @@ export function ItemCard({ item, index, onEdit, onDelete, onBadgeChange, onToggl
           {...provided.draggableProps}
           sx={{
             display: "grid",
-            gridTemplateColumns: "24px 1fr 72px 120px 96px",
+            gridTemplateColumns: "24px 1fr 72px 120px 40px 96px",
             alignItems: "center",
             gap: 1,
             p: 1,
@@ -121,6 +121,18 @@ export function ItemCard({ item, index, onEdit, onDelete, onBadgeChange, onToggl
                 </MenuItem>
               ))}
             </Menu>
+          </Box>
+
+          {/* Thumbnail */}
+          <Box sx={{ width: 36, height: 36, display: "flex", justifyContent: "center" }}>
+            {item.imageUrl && (
+              <Box
+                component="img"
+                src={item.imageUrl}
+                alt=""
+                sx={{ width: 36, height: 36, objectFit: "cover", borderRadius: 0.5 }}
+              />
+            )}
           </Box>
 
           {/* Actions */}
