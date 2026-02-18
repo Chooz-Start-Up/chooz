@@ -4,6 +4,7 @@ export {
   getAuthInstance,
   getDbInstance,
   getStorageInstance,
+  getFunctionsInstance,
 } from "./firebase";
 
 // Environment
@@ -22,6 +23,9 @@ export * as categoryService from "./firestore/category";
 export * as itemService from "./firestore/item";
 export * as userService from "./firestore/user";
 export * as claimService from "./firestore/claim";
+
+// Cloud Functions (callable wrappers)
+export * as adminService from "./functions";
 
 // Storage
 export * as storageService from "./storage";

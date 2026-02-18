@@ -56,6 +56,16 @@ export async function getPublishedRestaurants(): Promise<Restaurant[]> {
   }
 }
 
+export async function getAllRestaurants(): Promise<Restaurant[]> {
+  try {
+    const q = query(restaurantsCol(), orderBy("name"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (error) {
+    throw toAppError(error);
+  }
+}
+
 export async function createRestaurant(
   id: string,
   data: Omit<Restaurant, "id" | "createdAt" | "updatedAt">,

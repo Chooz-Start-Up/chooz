@@ -33,7 +33,7 @@
 | Image management UI | Done (on profile page) | `apps/web/components/restaurant/ImageUploadSection.tsx` |
 | Claim flow services | Done (backend) | `packages/services/src/firestore/claim.ts` |
 | Claim flow UI | Not started | — |
-| Admin dashboard | Stubs only | `apps/web/app/(admin)/` |
+| Admin dashboard (seed, claims, moderation) | Done | `apps/web/app/(admin)/`, `apps/web/stores/adminStore.ts`, `apps/web/components/admin/` |
 | Customer web fallback | Stubs only | `apps/web/app/restaurant/[id]/` |
 | Mobile screens | All stubbed, none implemented | `apps/mobile/app/` |
 | Legacy web app (CRA + React 18) | Running, reference only | `chooz-web/owner-web/` |
@@ -62,11 +62,12 @@ chooz/
 | Service | File | Capabilities |
 |---------|------|-------------|
 | Auth | `packages/services/src/auth/` | Email/password, Google, Facebook, Apple OAuth, email verification, password reset |
-| Restaurant | `packages/services/src/firestore/restaurant.ts` | Full CRUD, query by owner, publish/unpublish |
+| Restaurant | `packages/services/src/firestore/restaurant.ts` | Full CRUD, query by owner, query all (admin), publish/unpublish |
 | Menu | `packages/services/src/firestore/menu.ts` | Full CRUD for menus |
 | Category | `packages/services/src/firestore/category.ts` | Full CRUD for categories |
 | Item | `packages/services/src/firestore/item.ts` | Full CRUD for items |
-| Claim | `packages/services/src/firestore/claim.ts` | Create, review, status tracking |
+| Claim | `packages/services/src/firestore/claim.ts` | Create, review, status tracking, query all (admin) |
+| Admin (callables) | `packages/services/src/functions/index.ts` | `seedRestaurant`, `processClaim` via `httpsCallable` |
 | Storage | `packages/services/src/storage/` | Banner/logo/item image upload and delete, URL-based deletion |
 | Env validation | `packages/services/src/env.ts` | Zod schema for Firebase config |
 | Error handling | `packages/services/src/errors.ts` | AppError with typed codes |
@@ -90,6 +91,8 @@ chooz/
 | ItemEditDialog | `apps/web/components/menu/ItemEditDialog.tsx` | Create/edit dialog with image upload, dietary checkboxes (with spice level), Save & Add Another |
 | InlineEdit | `apps/web/components/menu/InlineEdit.tsx` | Click-to-edit text component |
 | DeleteConfirmDialog | `apps/web/components/menu/DeleteConfirmDialog.tsx` | Type-to-confirm deletion with cascade warnings |
+| ClaimReviewCard | `apps/web/components/admin/ClaimReviewCard.tsx` | Claim card with status chip, approve/reject buttons, confirm dialog |
+| RestaurantEditDialog | `apps/web/components/admin/RestaurantEditDialog.tsx` | Lightweight edit dialog for name, description, tags, published |
 | AuthGuard | `apps/web/components/AuthGuard.tsx` | Role-based route protection |
 | AuthProvider | `apps/web/components/AuthProvider.tsx` | Firebase auth state listener |
 
@@ -103,7 +106,7 @@ chooz/
 
 ### GitHub Issues (Monorepo — `Chooz-Start-Up/chooz`)
 
-**Closed (8):**
+**Closed (9):**
 
 | # | Title |
 |---|-------|
@@ -114,15 +117,15 @@ chooz/
 | 5 | feat: Owner auth flow |
 | 6 | feat: Restaurant profile management UI |
 | 7 | feat: Menu builder with drag-drop reordering |
+| 11 | feat: Admin dashboard P1 (seed, claims, moderation) |
 
-**Open (18):**
+**Open (19):**
 
 | # | Title | Backend | Web UI | Mobile UI |
 |---|-------|---------|--------|-----------|
 | 8 | Image management (banner + logo) | 100% | 100% | — |
 | 9 | QR code generation and share | 0% | 0% | 0% |
 | 10 | Claim restaurant flow | 80% | 0% | — |
-| 11 | Admin dashboard P1 (seed, claims, moderation) | 40% | 0% (stubs) | — |
 | 12 | Customer mobile auth flow | 100% | — | 0% (stub) |
 | 13 | Customer mobile nearby restaurants | 30% | — | 0% (stub) |
 | 14 | Customer mobile menu viewer | 70% | — | 0% (stub) |
@@ -138,6 +141,8 @@ chooz/
 | 28 | Research: audit log for profile/menu changes | — | — | — |
 | 29 | Import menu from image or PDF upload | 0% | 0% | — |
 | 30 | Auto-generate item tags from name/description | 0% | 0% | — |
+| 32 | Research: restricted restaurant name change flow | — | — | — |
+| 33 | Research: customer report system for restaurant pages | — | — | — |
 
 ### Legacy Issues (chooz-web — `Chooz-Start-Up/chooz-web`)
 
@@ -174,7 +179,7 @@ chooz/
 - **Two repos in play** — `Chooz-Start-Up/chooz` is the monorepo (active development). `Chooz-Start-Up/chooz-web` is the legacy repo. Issues live in both — monorepo issues are the ones that matter.
 - **Legacy app is in `chooz-web/owner-web/`** — CRA, class components, direct Firebase calls. Reference implementation only.
 - **Mobile screens are all stubs** — Expo Router file structure exists but every screen is a placeholder. No mobile UI has been implemented yet.
-- **Web dashboard has stub pages too** — Admin routes return placeholder text. Auth pages, restaurant profile (including image uploads), onboarding flow, and menu builder are fully built.
+- **Admin dashboard is fully built** — Seed tool, claims queue, restaurant moderation table all functional. Cloud Functions (`seedRestaurant`, `processClaim`) deployed to staging. Admin route group requires `role: "admin"` in the user document.
 - **Three route groups** — `(auth)` for public auth pages, `(dashboard)` for owner-protected pages with sidebar, `(onboarding)` for owner-protected pages without sidebar (welcome, setup).
 - **RestaurantForm has two variants** — `"edit"` shows sticky bar with "View Changes" button (profile page), `"create"` shows centered submit button (setup page).
 - **Publish toggle is gated** — Fields are not required to save/create, but name, description, and phone must be filled to toggle visibility to public. Toggle is proactively disabled with a warning message when fields are missing.
@@ -332,3 +337,33 @@ chooz/
 - #26 and #25 (Firebase Storage) still block profile image verification
 - #31 (image refinements) still open
 - Consider adding dietary icons to the mobile menu viewer when building #14
+
+### 2026-02-18 — Session 8: Admin dashboard Phase 1
+
+**What was done:**
+- **Full admin dashboard** (Issue #11) — 6 new files, 8 modified files:
+  - **Shared types** — `SeedRestaurantData`, `SeedRestaurantResult`, `ProcessClaimData`, `ProcessClaimResult` in `packages/shared/src/types/admin.ts`
+  - **Service layer** — `getFunctionsInstance()` lazy singleton, `httpsCallable` wrappers for `seedRestaurant`/`processClaim`, `getAllRestaurants()`, `getAllClaims()`, `"failed-precondition"` error code
+  - **Admin Zustand store** — `apps/web/stores/adminStore.ts` with restaurants, claims, loading, error state + fetch/seed/processClaim/updateRestaurant actions
+  - **Admin layout** — Upgraded from inline HTML to MUI Drawer with icons, nav highlighting, logout button, `/restaurants` link
+  - **Dashboard page** (`/dashboard`) — 4 stat cards (total, published, seeded, pending claims) + quick-action buttons
+  - **Seed tool** (`/seed`) — Form with name, description, address, phone, TagsSelect. Calls Cloud Function, shows snackbar, clears form
+  - **Claims page** (`/claims`) — Pending/All toggle filter, `ClaimReviewCard` with approve/reject buttons, confirmation dialog, admin notes
+  - **Restaurants page** (`/restaurants`) — MUI Table with search, ownership filter, published filter. `RestaurantEditDialog` for inline editing. Green row highlight on save
+- **Cloud Functions deployed** — `seedRestaurant` and `processClaim` deployed to `chooz-staging` (required `functions/.env` with Algolia placeholder values)
+- **Created tickets** — #32 (research: restricted name change flow), #33 (research: customer report system)
+- **Closed** — #11
+
+**Key design decisions:**
+- Published column uses clickable Chip (not Switch) that opens edit dialog — per user feedback, avoids accidental one-click publish/unpublish
+- Green row highlight (2s fade) after editing a restaurant — visual feedback for which row changed
+- Admin store doesn't use optimistic updates — internal tooling, simplicity preferred
+- Seed tool is a lightweight form (not reusing RestaurantForm) — too much overhead with drafts, hours, images for admin seeding
+- `functions/.env` with placeholder Algolia values needed to unblock deploy — Algolia sync function loads env vars at module init even when deploying unrelated functions
+
+**Key context for next session:**
+- Admin dashboard P1 is complete, P2 (#20) is next for owner support tools
+- Claim review UI works but wasn't fully tested (no test claim data in staging)
+- `functions/.env` is gitignored — real Algolia keys needed before deploying the sync function
+- #32 (name change restrictions) and #33 (report system) are research tickets for trust & safety
+- #10 (claim flow UI for owners) is now unblocked by admin dashboard

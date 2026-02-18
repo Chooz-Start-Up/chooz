@@ -44,6 +44,16 @@ export async function getPendingClaims(): Promise<ClaimRequest[]> {
   }
 }
 
+export async function getAllClaims(): Promise<ClaimRequest[]> {
+  try {
+    const q = query(claimsRef(), orderBy("submittedAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (error) {
+    throw toAppError(error);
+  }
+}
+
 export async function createClaimRequest(
   id: string,
   data: Omit<ClaimRequest, "id" | "submittedAt" | "reviewedAt" | "reviewedBy">,

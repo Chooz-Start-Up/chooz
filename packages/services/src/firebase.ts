@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getFunctions, type Functions } from "firebase/functions";
 import { getFirebaseConfig } from "./env";
 
 /**
@@ -13,6 +14,7 @@ let _app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
 let _storage: FirebaseStorage | null = null;
+let _functions: Functions | null = null;
 
 function ensureApp(): FirebaseApp {
   if (!_app) {
@@ -38,4 +40,9 @@ export function getDbInstance(): Firestore {
 export function getStorageInstance(): FirebaseStorage {
   if (!_storage) _storage = getStorage(ensureApp());
   return _storage;
+}
+
+export function getFunctionsInstance(): Functions {
+  if (!_functions) _functions = getFunctions(ensureApp());
+  return _functions;
 }

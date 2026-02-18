@@ -10,6 +10,7 @@ export type AppErrorCode =
   | "permission-denied"
   | "unauthenticated"
   | "invalid-argument"
+  | "failed-precondition"
   | "storage/object-not-found"
   | "storage/quota-exceeded"
   | "auth/email-already-in-use"
@@ -42,6 +43,7 @@ function mapFirebaseCode(firebaseCode: string): AppErrorCode {
     "permission-denied": "permission-denied",
     "unauthenticated": "unauthenticated",
     "invalid-argument": "invalid-argument",
+    "failed-precondition": "failed-precondition",
     "storage/object-not-found": "storage/object-not-found",
     "storage/quota-exceeded": "storage/quota-exceeded",
     "auth/email-already-in-use": "auth/email-already-in-use",
