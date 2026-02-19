@@ -19,6 +19,7 @@ interface ImageUploadSectionProps {
   bannerImageUrl: string | null;
   logoImageUrl: string | null;
   onImageUpdated: (field: "bannerImageUrl" | "logoImageUrl", url: string | null) => Promise<void>;
+  variant?: "card" | "hero";
 }
 
 export function ImageUploadSection({
@@ -26,6 +27,7 @@ export function ImageUploadSection({
   bannerImageUrl,
   logoImageUrl,
   onImageUpdated,
+  variant = "card",
 }: ImageUploadSectionProps) {
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +126,204 @@ export function ImageUploadSection({
     "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
   } as const;
 
+  const bannerContent = (
+    <Box sx={{ position: "relative", mb: variant === "hero" ? 0 : 3 }}>
+      <input
+        ref={bannerInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleBannerSelect}
+      />
+      {bannerImageUrl ? (
+        <Box
+          sx={{
+            position: "relative",
+            width: "100%",
+            aspectRatio: "3 / 1",
+            borderRadius: variant === "hero" ? 2 : 1,
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            component="img"
+            src={bannerImageUrl}
+            alt="Banner"
+            sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          {bannerLoading && (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "rgba(0,0,0,0.4)",
+              }}
+            >
+              <CircularProgress sx={{ color: "white" }} />
+            </Box>
+          )}
+          {!bannerLoading && (
+            <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={() => bannerInputRef.current?.click()}
+                sx={{ bgcolor: "rgba(255,255,255,0.85)", "&:hover": { bgcolor: "white" } }}
+              >
+                <AddPhotoAlternateIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={handleDeleteBanner}
+                sx={{ bgcolor: "rgba(255,255,255,0.85)", "&:hover": { bgcolor: "white" } }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          )}
+        </Box>
+      ) : (
+        <Box
+          onClick={() => !bannerLoading && bannerInputRef.current?.click()}
+          sx={{
+            ...placeholderSx,
+            width: "100%",
+            aspectRatio: "3 / 1",
+            flexDirection: "column",
+            gap: 0.5,
+            borderRadius: variant === "hero" ? 2 : 1,
+          }}
+        >
+          {bannerLoading ? (
+            <CircularProgress size={32} />
+          ) : (
+            <>
+              <AddPhotoAlternateIcon color="action" />
+              <Typography variant="body2" color="text.secondary">
+                Click to upload banner
+              </Typography>
+            </>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+
+  const logoContent = (
+    <Box sx={{ position: "relative", display: "inline-block" }}>
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleLogoSelect}
+      />
+      {logoImageUrl ? (
+        <Box sx={{ position: "relative" }}>
+          <Box
+            component="img"
+            src={logoImageUrl}
+            alt="Logo"
+            sx={{
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: variant === "hero" ? "3px solid white" : undefined,
+              boxShadow: variant === "hero" ? 2 : undefined,
+            }}
+          />
+          {logoLoading && (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                bgcolor: "rgba(0,0,0,0.4)",
+              }}
+            >
+              <CircularProgress sx={{ color: "white" }} />
+            </Box>
+          )}
+          {!logoLoading && (
+            <Box sx={{ position: "absolute", top: -4, right: -4, display: "flex", gap: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={() => logoInputRef.current?.click()}
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.85)",
+                  "&:hover": { bgcolor: "white" },
+                  width: 28,
+                  height: 28,
+                }}
+              >
+                <AddPhotoAlternateIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={handleDeleteLogo}
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.85)",
+                  "&:hover": { bgcolor: "white" },
+                  width: 28,
+                  height: 28,
+                }}
+              >
+                <DeleteIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Box>
+          )}
+        </Box>
+      ) : (
+        <Box
+          onClick={() => !logoLoading && logoInputRef.current?.click()}
+          sx={{
+            ...placeholderSx,
+            width: 120,
+            height: 120,
+            borderRadius: "50%",
+            flexDirection: "column",
+            gap: 0.5,
+            bgcolor: variant === "hero" ? "white" : undefined,
+            boxShadow: variant === "hero" ? 2 : undefined,
+          }}
+        >
+          {logoLoading ? (
+            <CircularProgress size={24} />
+          ) : (
+            <>
+              <AddPhotoAlternateIcon color="action" fontSize="small" />
+              <Typography variant="caption" color="text.secondary">
+                Upload logo
+              </Typography>
+            </>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+
+  if (variant === "hero") {
+    return (
+      <Box sx={{ position: "relative", mb: 7 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+        {bannerContent}
+        <Box sx={{ position: "absolute", bottom: -40, left: 24 }}>
+          {logoContent}
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 0.5 }}>
@@ -144,176 +344,13 @@ export function ImageUploadSection({
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
         Banner
       </Typography>
-      <Box sx={{ position: "relative", mb: 3 }}>
-        <input
-          ref={bannerInputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleBannerSelect}
-        />
-        {bannerImageUrl ? (
-          <Box
-            sx={{
-              position: "relative",
-              width: "100%",
-              aspectRatio: "3 / 1",
-              borderRadius: 1,
-              overflow: "hidden",
-            }}
-          >
-            <Box
-              component="img"
-              src={bannerImageUrl}
-              alt="Banner"
-              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-            {bannerLoading && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: "rgba(0,0,0,0.4)",
-                }}
-              >
-                <CircularProgress sx={{ color: "white" }} />
-              </Box>
-            )}
-            {!bannerLoading && (
-              <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 0.5 }}>
-                <IconButton
-                  size="small"
-                  onClick={() => bannerInputRef.current?.click()}
-                  sx={{ bgcolor: "rgba(255,255,255,0.85)", "&:hover": { bgcolor: "white" } }}
-                >
-                  <AddPhotoAlternateIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={handleDeleteBanner}
-                  sx={{ bgcolor: "rgba(255,255,255,0.85)", "&:hover": { bgcolor: "white" } }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            )}
-          </Box>
-        ) : (
-          <Box
-            onClick={() => !bannerLoading && bannerInputRef.current?.click()}
-            sx={{ ...placeholderSx, width: "100%", aspectRatio: "3 / 1", flexDirection: "column", gap: 0.5 }}
-          >
-            {bannerLoading ? (
-              <CircularProgress size={32} />
-            ) : (
-              <>
-                <AddPhotoAlternateIcon color="action" />
-                <Typography variant="body2" color="text.secondary">
-                  Click to upload banner
-                </Typography>
-              </>
-            )}
-          </Box>
-        )}
-      </Box>
+      {bannerContent}
 
       {/* Logo */}
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
         Logo
       </Typography>
-      <Box sx={{ position: "relative", display: "inline-block" }}>
-        <input
-          ref={logoInputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleLogoSelect}
-        />
-        {logoImageUrl ? (
-          <Box sx={{ position: "relative" }}>
-            <Box
-              component="img"
-              src={logoImageUrl}
-              alt="Logo"
-              sx={{
-                width: 120,
-                height: 120,
-                borderRadius: "50%",
-                objectFit: "cover",
-              }}
-            />
-            {logoLoading && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "50%",
-                  bgcolor: "rgba(0,0,0,0.4)",
-                }}
-              >
-                <CircularProgress sx={{ color: "white" }} />
-              </Box>
-            )}
-            {!logoLoading && (
-              <Box sx={{ position: "absolute", top: -4, right: -4, display: "flex", gap: 0.5 }}>
-                <IconButton
-                  size="small"
-                  onClick={() => logoInputRef.current?.click()}
-                  sx={{
-                    bgcolor: "rgba(255,255,255,0.85)",
-                    "&:hover": { bgcolor: "white" },
-                    width: 28,
-                    height: 28,
-                  }}
-                >
-                  <AddPhotoAlternateIcon sx={{ fontSize: 16 }} />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={handleDeleteLogo}
-                  sx={{
-                    bgcolor: "rgba(255,255,255,0.85)",
-                    "&:hover": { bgcolor: "white" },
-                    width: 28,
-                    height: 28,
-                  }}
-                >
-                  <DeleteIcon sx={{ fontSize: 16 }} />
-                </IconButton>
-              </Box>
-            )}
-          </Box>
-        ) : (
-          <Box
-            onClick={() => !logoLoading && logoInputRef.current?.click()}
-            sx={{
-              ...placeholderSx,
-              width: 120,
-              height: 120,
-              borderRadius: "50%",
-              flexDirection: "column",
-              gap: 0.5,
-            }}
-          >
-            {logoLoading ? (
-              <CircularProgress size={24} />
-            ) : (
-              <>
-                <AddPhotoAlternateIcon color="action" fontSize="small" />
-                <Typography variant="caption" color="text.secondary">
-                  Upload logo
-                </Typography>
-              </>
-            )}
-          </Box>
-        )}
-      </Box>
+      {logoContent}
     </Paper>
   );
 }

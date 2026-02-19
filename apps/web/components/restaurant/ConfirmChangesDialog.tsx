@@ -1,3 +1,6 @@
+import React from "react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
@@ -40,6 +43,7 @@ interface ConfirmChangesDialogProps {
   onConfirm: () => void;
   confirming: boolean;
   changes: ChangeItem[];
+  error?: string | null;
 }
 
 function formatValue(item: ChangeItem, value: string | string[] | undefined, side: "before" | "after"): string {
@@ -174,7 +178,7 @@ export function computeChanges(
   return changes;
 }
 
-export function ConfirmChangesDialog({ open, onClose, onConfirm, confirming, changes }: ConfirmChangesDialogProps) {
+export function ConfirmChangesDialog({ open, onClose, onConfirm, confirming, changes, error }: ConfirmChangesDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Review Changes</DialogTitle>
@@ -209,11 +213,32 @@ export function ConfirmChangesDialog({ open, onClose, onConfirm, confirming, cha
                   </>
                 ) : item.type === "hours" ? (
                   <TableCell colSpan={2}>
-                    {item.hoursDiff?.map((d) => (
-                      <Typography key={d.day} variant="body2">
-                        <strong>{d.day}:</strong> {d.before} &rarr; {d.after}
-                      </Typography>
-                    ))}
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "auto auto auto auto",
+                        columnGap: 1,
+                        alignItems: "baseline",
+                        width: "fit-content",
+                      }}
+                    >
+                      {item.hoursDiff?.map((d) => (
+                        <React.Fragment key={d.day}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+                            {d.day}:
+                          </Typography>
+                          <Typography variant="body2" sx={{ whiteSpace: "nowrap", textAlign: "right" }}>
+                            {d.before}
+                          </Typography>
+                          <Typography variant="body2" sx={{ textAlign: "center" }}>
+                            &rarr;
+                          </Typography>
+                          <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>
+                            {d.after}
+                          </Typography>
+                        </React.Fragment>
+                      ))}
+                    </Box>
                   </TableCell>
                 ) : item.type === "image" ? (
                   <TableCell colSpan={2}>
@@ -240,6 +265,11 @@ export function ConfirmChangesDialog({ open, onClose, onConfirm, confirming, cha
           </TableBody>
         </Table>
       </DialogContent>
+      {error && (
+        <DialogContent sx={{ pt: 0, pb: 0 }}>
+          <Alert severity="error">{error}</Alert>
+        </DialogContent>
+      )}
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose} disabled={confirming} sx={{ textTransform: "none" }}>
           Cancel

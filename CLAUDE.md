@@ -34,6 +34,10 @@ pnpm typecheck        # TypeScript only across all packages
 pnpm clean            # Remove build artifacts
 ```
 
+## Communication
+
+- **Always use `AskUserQuestion` for questions.** When you need to clarify requirements, offer choices, or get decisions on implementation approaches, use the `AskUserQuestion` tool instead of asking inline in chat. This keeps decisions structured and easy to review.
+
 ## Architecture Principles
 
 1. **Shared types are framework-agnostic.** `@chooz/shared` has zero runtime dependencies. It defines plain TypeScript interfaces. Firebase `Timestamp` is represented as `{ seconds: number; nanoseconds: number }` — conversion happens in the service layer.

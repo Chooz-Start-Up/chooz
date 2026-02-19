@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [snackOpen, setSnackOpen] = useState(false);
   const [noChangesSnackOpen, setNoChangesSnackOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [pendingFormData, setPendingFormData] = useState<RestaurantFormData | null>(null);
 
   // Snapshot of the restaurant state when the page loads, used to detect image changes
@@ -105,6 +106,7 @@ export default function ProfilePage() {
   const handleConfirm = async () => {
     if (!pendingFormData) return;
     setSubmitting(true);
+    setConfirmError(null);
     try {
       await updateRestaurant(restaurant.id, {
         name: pendingFormData.name,
@@ -129,6 +131,10 @@ export default function ProfilePage() {
           logo: restaurant.logoImageUrl,
         },
       };
+    } catch (error) {
+      setConfirmError(
+        error instanceof Error ? error.message : "Failed to save changes. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -152,11 +158,16 @@ export default function ProfilePage() {
         Update your restaurant information.
       </Typography>
       <ImageUploadSection
+        variant="hero"
         restaurantId={restaurant.id}
         bannerImageUrl={restaurant.bannerImageUrl}
         logoImageUrl={restaurant.logoImageUrl}
         onImageUpdated={async (field, url) => {
           await updateRestaurant(restaurant.id, { [field]: url });
+          if (initialSnapshot.current) {
+            const key = field === "bannerImageUrl" ? "banner" : "logo";
+            initialSnapshot.current.images[key] = url;
+          }
         }}
       />
       <RestaurantForm
@@ -171,6 +182,7 @@ export default function ProfilePage() {
         onClose={() => {
           setConfirmDialogOpen(false);
           setPendingFormData(null);
+          setConfirmError(null);
           // Drop the pending promise — it stays unresolved so the form
           // keeps its dirty state and the sticky bar reappears.
           pendingResolve.current = null;
@@ -178,6 +190,7 @@ export default function ProfilePage() {
         onConfirm={handleConfirm}
         confirming={submitting}
         changes={confirmChanges}
+        error={confirmError}
       />
       <Snackbar
         open={snackOpen}

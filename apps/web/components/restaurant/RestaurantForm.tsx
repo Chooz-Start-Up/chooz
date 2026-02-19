@@ -19,7 +19,7 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { OperatingHours, Restaurant } from "@chooz/shared";
-import { DEFAULT_OPERATING_HOURS } from "@chooz/shared";
+import { colors, DEFAULT_OPERATING_HOURS } from "@chooz/shared";
 import { OperatingHoursInput } from "./OperatingHoursInput";
 import { TagsSelect } from "./TagsSelect";
 
@@ -388,7 +388,7 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
 
         {/* Visibility */}
         {initialData && (
-          <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3, mb: 3, bgcolor: colors.secondary.main }}>
             <Typography variant="h6" sx={{ mb: 0.5 }}>
               Visibility
             </Typography>

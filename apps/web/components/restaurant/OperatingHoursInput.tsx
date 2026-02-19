@@ -1,13 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import MoreVert from "@mui/icons-material/MoreVert";
 import type { OperatingHours } from "@chooz/shared";
 import { DAYS_OF_WEEK } from "@chooz/shared";
+
+const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+const WEEKENDS = ["saturday", "sunday"];
 
 interface OperatingHoursInputProps {
   value: OperatingHours;
@@ -19,6 +29,18 @@ function capitalize(s: string) {
 }
 
 export function OperatingHoursInput({ value, onChange }: OperatingHoursInputProps) {
+  const [menuAnchor, setMenuAnchor] = useState<{ day: string; anchorEl: HTMLElement } | null>(null);
+
+  const applyHours = (sourceDay: string, targetDays: string[]) => {
+    const source = value[sourceDay] ?? { open: "09:00", close: "22:00", isClosed: true };
+    const updated = { ...value };
+    for (const day of targetDays) {
+      updated[day] = { ...source };
+    }
+    onChange(updated);
+    setMenuAnchor(null);
+  };
+
   const handleTimeChange = (day: string, field: "open" | "close", time: string) => {
     onChange({
       ...value,
@@ -98,9 +120,33 @@ export function OperatingHoursInput({ value, onChange }: OperatingHoursInputProp
               InputLabelProps={{ shrink: true }}
               sx={{ width: 150 }}
             />
+            <Tooltip title="Copy hours to...">
+              <IconButton
+                size="small"
+                sx={{ ml: "auto" }}
+                onClick={(e) => setMenuAnchor({ day, anchorEl: e.currentTarget })}
+              >
+                <MoreVert fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         );
       })}
+      <Menu
+        anchorEl={menuAnchor?.anchorEl}
+        open={!!menuAnchor}
+        onClose={() => setMenuAnchor(null)}
+      >
+        <MenuItem onClick={() => menuAnchor && applyHours(menuAnchor.day, [...DAYS_OF_WEEK])}>
+          <ListItemText>Apply to all days</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => menuAnchor && applyHours(menuAnchor.day, WEEKDAYS)}>
+          <ListItemText>Apply to weekdays (Mon–Fri)</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => menuAnchor && applyHours(menuAnchor.day, WEEKENDS)}>
+          <ListItemText>Apply to weekends (Sat–Sun)</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }

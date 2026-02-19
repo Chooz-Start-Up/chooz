@@ -79,8 +79,8 @@ chooz/
 |-----------|------|-------------|
 | RestaurantForm | `apps/web/components/restaurant/RestaurantForm.tsx` | Full profile editing with hours, tags, publish toggle, draft auto-save, dirty tracking. Dual variant: "edit" (sticky bar) and "create" (static button) |
 | ConfirmChangesDialog | `apps/web/components/restaurant/ConfirmChangesDialog.tsx` | Before/after review dialog for profile saves. Shows per-field diffs including detailed hours changes |
-| ImageUploadSection | `apps/web/components/restaurant/ImageUploadSection.tsx` | Banner + logo upload with preview, replace, delete |
-| OperatingHoursInput | `apps/web/components/restaurant/OperatingHoursInput.tsx` | Day-by-day open/close time editor |
+| ImageUploadSection | `apps/web/components/restaurant/ImageUploadSection.tsx` | Banner + logo upload with preview, replace, delete. Dual variant: "card" (Paper wrapper, used on setup page) and "hero" (full-width banner with overlapping logo, used on profile page) |
+| OperatingHoursInput | `apps/web/components/restaurant/OperatingHoursInput.tsx` | Day-by-day open/close time editor with "Copy hours to..." menu (all days, weekdays, weekends) |
 | TagsSelect | `apps/web/components/restaurant/TagsSelect.tsx` | Multi-select for restaurant tags |
 | AuthCard | `apps/web/components/AuthCard.tsx` | Shared auth page layout |
 | OAuthButtons | `apps/web/components/OAuthButtons.tsx` | Google/Facebook/Apple sign-in buttons |
@@ -427,3 +427,20 @@ chooz/
 - #35 (mobile-responsive dashboard) is the next UI polish ticket
 - Firestore composite index is deployed to staging — may take a few minutes to build after deploy
 - `overflow-x: clip` in globals.css — watch for any side effects on other pages
+
+### 2026-02-19 — Session 11: Hero banner layout, collapsible sidebar, and UX polish
+
+**What was done:**
+- **Hero banner layout** — Added `variant` prop to `ImageUploadSection` (`"card"` default / `"hero"`). Hero variant renders banner full-width with `borderRadius: 2`, logo overlaps bottom-left of banner with absolute positioning (`bottom: -40px, left: 24px`), white border and box-shadow. Card variant unchanged (setup page unaffected). Profile page passes `variant="hero"`.
+- **Collapsible sidebar** — Dashboard layout sidebar collapses to 64px icon-only strip via chevron toggle. Hover-to-expand when collapsed: drawer overlays content at full 240px width, collapses back on mouse leave. Logout button hidden when collapsed. Smooth 0.2s width transition on drawer, spacer, and chevron rotation.
+- **Visibility section styling** — Added brand tan background (`colors.secondary.main` / `#FFFAEF`) to Visibility Paper in `RestaurantForm`.
+- **Confirm dialog error display** — Added `error` prop to `ConfirmChangesDialog`. Profile page catches save errors and displays them inline in the dialog. Error clears on retry or close.
+- **Hours diff grid layout** — Replaced inline text diff with a 4-column CSS grid (day, before, arrow, after) for cleaner alignment in the confirm dialog.
+- **Operating hours "Copy to..." menu** — Added three-dot menu per day row in `OperatingHoursInput`: "Apply to all days", "Apply to weekdays", "Apply to weekends". Copies the source day's open/close/isClosed to target days.
+- **Image snapshot tracking** — Profile page now updates `initialSnapshot.current.images` when images are uploaded/deleted, so subsequent form saves correctly detect image changes.
+- **CLAUDE.md** — Added communication convention (use `AskUserQuestion` for questions).
+
+**Key context for next session:**
+- Sidebar collapse state is local (`useState`) — not persisted across page loads. Could be stored in localStorage if persistence is desired.
+- Hero layout uses `mb: 7` (56px) to clear the overlapping logo. If logo size changes from 120px, this margin needs adjustment.
+- No tickets were closeable from this work — all changes are UX polish on existing features.
