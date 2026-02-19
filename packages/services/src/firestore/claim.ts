@@ -75,7 +75,10 @@ export async function updateClaimRequest(
   data: Partial<Omit<ClaimRequest, "id" | "submittedAt">>,
 ): Promise<void> {
   try {
-    await updateDoc(doc(getDbInstance(), COLLECTION, id), data);
+    await updateDoc(doc(getDbInstance(), COLLECTION, id), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
   } catch (error) {
     throw toAppError(error);
   }

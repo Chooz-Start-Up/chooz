@@ -22,7 +22,7 @@ const EMPTY_FORM: SeedRestaurantData = {
 };
 
 export default function SeedPage() {
-  const { seedRestaurant, loading } = useAdminStore();
+  const { seedRestaurant, submitting } = useAdminStore();
   const [form, setForm] = useState<SeedRestaurantData>(EMPTY_FORM);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -105,10 +105,10 @@ export default function SeedPage() {
           <Button
             type="submit"
             variant="contained"
-            disabled={loading || !form.name.trim()}
-            startIcon={loading ? <CircularProgress size={20} /> : undefined}
+            disabled={submitting || !form.name.trim()}
+            startIcon={submitting ? <CircularProgress size={20} /> : undefined}
           >
-            {loading ? "Seeding..." : "Seed Restaurant"}
+            {submitting ? "Seeding..." : "Seed Restaurant"}
           </Button>
         </form>
       </Paper>

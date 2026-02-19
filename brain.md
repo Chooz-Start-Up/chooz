@@ -20,7 +20,7 @@
 | `@chooz/mobile` (Expo 54, Expo Router) | Scaffolded, screens stubbed | `apps/mobile/` |
 | `@chooz/functions` (Cloud Functions) | Done | `functions/` |
 | CI/CD (GitHub Actions) | Done | `.github/workflows/` |
-| Test infrastructure (Vitest) | Done (23 tests) | Across packages |
+| Test infrastructure (Vitest) | Done (43 tests) | Across packages |
 | Algolia sync (Firestore → Algolia) | Done | `functions/src/algolia/sync.ts` |
 | RTDB → Firestore migration script | Done | `scripts/migrate-rtdb-to-firestore.ts` |
 | Firebase staging/prod config | Done | `.firebaserc` |
@@ -117,13 +117,13 @@ chooz/
 | 5 | feat: Owner auth flow |
 | 6 | feat: Restaurant profile management UI |
 | 7 | feat: Menu builder with drag-drop reordering |
+| 8 | feat: Image management (banner + logo) |
 | 11 | feat: Admin dashboard P1 (seed, claims, moderation) |
 
-**Open (19):**
+**Open (24):**
 
 | # | Title | Backend | Web UI | Mobile UI |
 |---|-------|---------|--------|-----------|
-| 8 | Image management (banner + logo) | 100% | 100% | — |
 | 9 | QR code generation and share | 0% | 0% | 0% |
 | 10 | Claim restaurant flow | 80% | 0% | — |
 | 12 | Customer mobile auth flow | 100% | — | 0% (stub) |
@@ -138,9 +138,14 @@ chooz/
 | 21 | Research: owner-to-restaurant 1:many | — | — | — |
 | 22 | Research: multi-location support | — | — | — |
 | 23 | Expand restaurant tag options | 80% | 20% | 0% |
+| 24 | Preview button for owners | 100% | 0% | — |
+| 25 | Firebase Storage setup (staging + prod) | — | — | — |
+| 26 | Finish image upload on profile page | — | blocked by #25 | — |
+| 27 | Research: food trucks and mobile vendors | — | — | — |
 | 28 | Research: audit log for profile/menu changes | — | — | — |
 | 29 | Import menu from image or PDF upload | 0% | 0% | — |
 | 30 | Auto-generate item tags from name/description | 0% | 0% | — |
+| 31 | Image upload refinements | 0% | 0% | — |
 | 32 | Research: restricted restaurant name change flow | — | — | — |
 | 33 | Research: customer report system for restaurant pages | — | — | — |
 
@@ -367,3 +372,25 @@ chooz/
 - `functions/.env` is gitignored — real Algolia keys needed before deploying the sync function
 - #32 (name change restrictions) and #33 (report system) are research tickets for trust & safety
 - #10 (claim flow UI for owners) is now unblocked by admin dashboard
+
+### 2026-02-18 — Session 9: Full codebase review and test coverage
+
+**What was done:**
+- **Full codebase review** — Reviewed all layers: shared types, services, stores, components, and pages. Identified issues across the entire codebase, not just admin dashboard.
+- **Admin store race condition fix** — Replaced single `loading: boolean` with granular `loadingRestaurants`, `loadingClaims`, `submitting` states. Added `extractErrorMessage()` helper using `AppError`-aware checking. Updated all 4 admin pages to use new state names.
+- **Service layer fixes** — Added missing `updatedAt: serverTimestamp()` to `updateClaimRequest()` (was the only update function without it). Renamed `restaurantsCol()` → `restaurantsRef()` for naming consistency across modules.
+- **UI fixes** — Added timer cleanup `useEffect` for highlight timer on restaurants page. Replaced `<a>` tags with Next.js `<Link>` in dashboard layout to prevent full page reloads.
+- **Test coverage** — Wrote 20 new tests (43 total, up from 23):
+  - `apps/web/stores/adminStore.test.ts` (16 tests) — initial state, fetch success/error, concurrent fetch isolation, seed/processClaim/updateRestaurant with submitting states
+  - `packages/services/src/functions/index.test.ts` (4 tests) — callable wrappers for `seedRestaurant` and `processClaim` with error wrapping
+- `pnpm typecheck` and `pnpm test` both pass cleanly.
+
+**Key decisions:**
+- Granular loading states prevent race conditions when `fetchRestaurants()` and `fetchClaims()` run concurrently on the dashboard page
+- Tests mock `@chooz/services` entirely (no Firebase dependency in test env)
+- `httpsCallable` mock uses `as unknown as ReturnType<typeof vi.fn>` cast to avoid Firebase SDK type mismatches in tests
+
+**Key context for next session:**
+- All changes from review are uncommitted (8 modified files + 2 new test files)
+- Test coverage is focused on admin store and callable functions — authStore, restaurantStore, menuStore, and Firestore services still have minimal or no tests
+- No open issues were closeable from this work

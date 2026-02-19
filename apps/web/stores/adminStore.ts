@@ -10,12 +10,21 @@ import {
   restaurantService,
   claimService,
   adminService,
+  AppError,
 } from "@chooz/services";
+
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof AppError) return error.message;
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
 
 interface AdminState {
   restaurants: Restaurant[];
   claims: ClaimRequest[];
-  loading: boolean;
+  loadingRestaurants: boolean;
+  loadingClaims: boolean;
+  submitting: boolean;
   error: string | null;
 
   fetchRestaurants: () => Promise<void>;
@@ -35,69 +44,72 @@ interface AdminState {
 export const useAdminStore = create<AdminState>((set, get) => ({
   restaurants: [],
   claims: [],
-  loading: false,
+  loadingRestaurants: false,
+  loadingClaims: false,
+  submitting: false,
   error: null,
 
   fetchRestaurants: async () => {
-    set({ loading: true, error: null });
+    set({ loadingRestaurants: true, error: null });
     try {
       const restaurants = await restaurantService.getAllRestaurants();
-      set({ restaurants, loading: false });
+      set({ restaurants, loadingRestaurants: false });
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ error: extractErrorMessage(error), loadingRestaurants: false });
     }
   },
 
   fetchClaims: async () => {
-    set({ loading: true, error: null });
+    set({ loadingClaims: true, error: null });
     try {
       const claims = await claimService.getAllClaims();
-      set({ claims, loading: false });
+      set({ claims, loadingClaims: false });
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ error: extractErrorMessage(error), loadingClaims: false });
     }
   },
 
   seedRestaurant: async (data) => {
-    set({ loading: true, error: null });
+    set({ submitting: true, error: null });
     try {
       const result = await adminService.seedRestaurant(data);
-      // Refresh restaurants list after seeding
-      await get().fetchRestaurants();
-      set({ loading: false });
+      const restaurants = await restaurantService.getAllRestaurants();
+      set({ restaurants, submitting: false });
       return result;
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ error: extractErrorMessage(error), submitting: false });
       throw error;
     }
   },
 
   processClaim: async (claimRequestId, action, notes) => {
-    set({ loading: true, error: null });
+    set({ submitting: true, error: null });
     try {
       const result = await adminService.processClaim({
         claimRequestId,
         action,
         notes,
       });
-      // Refresh both claims and restaurants after processing
-      await Promise.all([get().fetchClaims(), get().fetchRestaurants()]);
-      set({ loading: false });
+      const [claims, restaurants] = await Promise.all([
+        claimService.getAllClaims(),
+        restaurantService.getAllRestaurants(),
+      ]);
+      set({ claims, restaurants, submitting: false });
       return result;
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ error: extractErrorMessage(error), submitting: false });
       throw error;
     }
   },
 
   updateRestaurant: async (id, data) => {
-    set({ loading: true, error: null });
+    set({ submitting: true, error: null });
     try {
       await restaurantService.updateRestaurant(id, data);
-      await get().fetchRestaurants();
-      set({ loading: false });
+      const restaurants = await restaurantService.getAllRestaurants();
+      set({ restaurants, submitting: false });
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      set({ error: extractErrorMessage(error), submitting: false });
       throw error;
     }
   },

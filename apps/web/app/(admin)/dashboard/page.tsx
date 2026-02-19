@@ -37,7 +37,7 @@ function StatCard({
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const { restaurants, claims, loading, error, fetchRestaurants, fetchClaims } =
+  const { restaurants, claims, loadingRestaurants, loadingClaims, error, fetchRestaurants, fetchClaims } =
     useAdminStore();
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
   ).length;
   const pendingClaims = claims.filter((c) => c.status === "pending").length;
 
-  if (loading && restaurants.length === 0) {
+  if ((loadingRestaurants || loadingClaims) && restaurants.length === 0) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
         <CircularProgress />

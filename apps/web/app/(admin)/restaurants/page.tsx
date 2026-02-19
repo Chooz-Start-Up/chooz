@@ -43,7 +43,7 @@ function formatDate(ts: { seconds: number }): string {
 export default function RestaurantsPage() {
   const {
     restaurants,
-    loading,
+    loadingRestaurants,
     error,
     fetchRestaurants,
     updateRestaurant,
@@ -68,6 +68,10 @@ export default function RestaurantsPage() {
     clearTimeout(highlightTimer.current);
     setRecentlyEditedId(id);
     highlightTimer.current = setTimeout(() => setRecentlyEditedId(null), 2000);
+  }, []);
+
+  useEffect(() => {
+    return () => clearTimeout(highlightTimer.current);
   }, []);
 
   useEffect(() => {
@@ -112,7 +116,7 @@ export default function RestaurantsPage() {
     }
   };
 
-  if (loading && restaurants.length === 0) {
+  if (loadingRestaurants && restaurants.length === 0) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
         <CircularProgress />

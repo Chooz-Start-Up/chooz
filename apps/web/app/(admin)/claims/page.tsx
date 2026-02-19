@@ -17,7 +17,8 @@ export default function ClaimsPage() {
   const {
     claims,
     restaurants,
-    loading,
+    loadingClaims,
+    submitting,
     error,
     fetchClaims,
     fetchRestaurants,
@@ -63,7 +64,7 @@ export default function ClaimsPage() {
     }
   };
 
-  if (loading && claims.length === 0) {
+  if (loadingClaims && claims.length === 0) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
         <CircularProgress />
@@ -116,7 +117,7 @@ export default function ClaimsPage() {
               restaurantMap.get(claim.restaurantId) ?? "Unknown Restaurant"
             }
             onProcess={handleProcess}
-            disabled={loading}
+            disabled={submitting}
           />
         ))
       )}

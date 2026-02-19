@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authService } from "@chooz/services";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -35,10 +36,10 @@ export default function DashboardLayout({
           <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Chooz</h2>
           <ul style={{ listStyle: "none", padding: 0, flex: 1 }}>
             <li style={{ marginBottom: "0.5rem" }}>
-              <a href="/edit">Menu Editor</a>
+              <Link href="/edit">Menu Editor</Link>
             </li>
             <li style={{ marginBottom: "0.5rem" }}>
-              <a href="/profile">Profile</a>
+              <Link href="/profile">Profile</Link>
             </li>
           </ul>
           <button
