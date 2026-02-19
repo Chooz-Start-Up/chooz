@@ -34,6 +34,7 @@
 | Claim flow services | Done (backend) | `packages/services/src/firestore/claim.ts` |
 | Claim flow UI | Not started | — |
 | Admin dashboard (seed, claims, moderation) | Done | `apps/web/app/(admin)/`, `apps/web/stores/adminStore.ts`, `apps/web/components/admin/` |
+| Landing page | Done | `apps/web/app/page.tsx`, `apps/web/components/landing/` |
 | Customer web fallback | Stubs only | `apps/web/app/restaurant/[id]/` |
 | Mobile screens | All stubbed, none implemented | `apps/mobile/app/` |
 | Legacy web app (CRA + React 18) | Running, reference only | `chooz-web/owner-web/` |
@@ -93,6 +94,8 @@ chooz/
 | DeleteConfirmDialog | `apps/web/components/menu/DeleteConfirmDialog.tsx` | Type-to-confirm deletion with cascade warnings |
 | ClaimReviewCard | `apps/web/components/admin/ClaimReviewCard.tsx` | Claim card with status chip, approve/reject buttons, confirm dialog |
 | RestaurantEditDialog | `apps/web/components/admin/RestaurantEditDialog.tsx` | Lightweight edit dialog for name, description, tags, published |
+| LandingHeader | `apps/web/components/landing/LandingHeader.tsx` | Sticky AppBar with logo + "Log In" / "Get Started" nav |
+| RestaurantPreviewGrid | `apps/web/components/landing/RestaurantPreviewGrid.tsx` | Fetches up to 8 published restaurants, card grid with skeleton loading |
 | AuthGuard | `apps/web/components/AuthGuard.tsx` | Role-based route protection |
 | AuthProvider | `apps/web/components/AuthProvider.tsx` | Firebase auth state listener |
 
@@ -119,6 +122,7 @@ chooz/
 | 7 | feat: Menu builder with drag-drop reordering |
 | 8 | feat: Image management (banner + logo) |
 | 11 | feat: Admin dashboard P1 (seed, claims, moderation) |
+| 34 | feat: Landing page for restaurant owners |
 
 **Open (24):**
 
@@ -148,6 +152,7 @@ chooz/
 | 31 | Image upload refinements | 0% | 0% | — |
 | 32 | Research: restricted restaurant name change flow | — | — | — |
 | 33 | Research: customer report system for restaurant pages | — | — | — |
+| 35 | feat: Mobile-responsive dashboard + mobile editing warning | 0% | 0% | — |
 
 ### Legacy Issues (chooz-web — `Chooz-Start-Up/chooz-web`)
 
@@ -394,3 +399,31 @@ chooz/
 - All changes from review are uncommitted (8 modified files + 2 new test files)
 - Test coverage is focused on admin store and callable functions — authStore, restaurantStore, menuStore, and Firestore services still have minimal or no tests
 - No open issues were closeable from this work
+
+### 2026-02-19 — Session 10: Landing page for restaurant owners
+
+**What was done:**
+- **Landing page** (Issue #34) — Replaced placeholder root route with full landing page:
+  - `LandingHeader` — Sticky white AppBar with Chooz logo + text, "Log In" / "Get Started" nav buttons
+  - Hero section — Cream background, heading, value prop, red CTA button
+  - Features section — 3-column grid: "Publish Your Menu", "Reach New Customers", "Manage Effortlessly" with MUI icons
+  - `RestaurantPreviewGrid` — Fetches up to 8 published restaurants, responsive card grid (1/2/3/4 cols), skeleton loading, error/empty states
+  - CTA banner — Red background, white text, "Get Started" button
+  - Footer — Dark background with white logo, copyright, login/register links
+- **Brand logo** — Copied `adaptive-icon.png` from mobile app to `apps/web/public/logo.png`. Added to LandingHeader, AuthCard (login/register pages), and footer
+- **Firestore composite index** — Added `isPublished` + `name` index to `firestore.indexes.json` and deployed to staging. Required for `getPublishedRestaurants()` query
+- **CSS fix** — Changed `overflow-x: hidden` → `overflow-x: clip` in `globals.css` to fix `position: sticky` on the header
+- **Restaurant card design** — White background with Chooz logo placeholder when no banner image, inset shadow from description area, smaller tag chips, hover lift effect, `onError` fallback for broken images
+- **Created ticket** — #35 (mobile-responsive dashboard pages + mobile editing warning)
+- **Closed** — #34
+
+**Key design decisions:**
+- Page is `"use client"` — MUI components require client context. Static sections (hero, features, CTA, footer) still render fast; restaurant grid fetches client-side with skeleton loading
+- Restaurant data is read-once display data — local `useState` instead of Zustand store
+- Logo uses CSS `filter: brightness(0) invert(1)` in the dark footer to render white
+
+**Key context for next session:**
+- Landing page is complete and verified through 15 manual test steps
+- #35 (mobile-responsive dashboard) is the next UI polish ticket
+- Firestore composite index is deployed to staging — may take a few minutes to build after deploy
+- `overflow-x: clip` in globals.css — watch for any side effects on other pages

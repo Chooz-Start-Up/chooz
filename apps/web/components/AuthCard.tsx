@@ -23,6 +23,13 @@ export function AuthCard({ heading, subtitle, children }: AuthCardProps) {
         alignItems: "center",
       }}
     >
+      <Box
+        component="img"
+        src="/logo.png"
+        alt="Chooz"
+        sx={{ width: 100, height: 100, mb: 0 }}
+      />
+
       <Typography
         variant="h4"
         sx={{ color: "primary.main", fontWeight: 700, mb: 3 }}
