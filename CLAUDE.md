@@ -124,45 +124,6 @@ try {
 | UI (web) | MUI 5 + Emotion |
 | Language | TypeScript (strict mode) |
 
-## Issue / Ticket Standard
-
-### Title
-`prefix: Short description`
-
-Prefixes:
-- `feat` — new feature or user-facing functionality
-- `fix` — bug fix
-- `infra` — CI/CD, tooling, config, testing infrastructure, migrations
-- `research` — investigation, spike, or design exploration
-
-### Body Template
-Every issue must include these four sections:
-
-```markdown
-## Description
-Why this work is needed and a summary of what needs to be done. Link to relevant PRD section or prior issues.
-
-## Completion Criteria
-- [ ] Concrete, verifiable checklist of what "done" looks like
-- [ ] Each item should be independently testable
-
-## Implementation
-**Key files:**
-- `path/to/file.ts` — what changes here
-
-**Approach:**
-High-level description of the implementation strategy.
-
-## Dependencies
-- Blocked by: #X (or "None")
-- Blocks: #Y (or "None")
-```
-
-### Labels
-- Phase: `phase-0`, `phase-1`
-- Platform: `web-dashboard`, `mobile`, `web-fallback`
-- Domain: `infra`, `search`
-
 ## Firebase Projects
 
 | Environment | Project ID | Branch | Deploy trigger |

@@ -15,7 +15,7 @@ import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import StorefrontIcon from "@mui/icons-material/Storefront";
+import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { authService } from "@chooz/services";
 import { colors } from "@chooz/shared";
@@ -26,8 +26,8 @@ const DRAWER_WIDTH_COLLAPSED = 64;
 const TRANSITION = "width 0.2s ease";
 
 const NAV_ITEMS = [
+  { label: "Profile", href: "/profile", icon: <PersonIcon /> },
   { label: "Menu Editor", href: "/edit", icon: <MenuBookIcon /> },
-  { label: "Profile", href: "/profile", icon: <StorefrontIcon /> },
 ];
 
 /**
