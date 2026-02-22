@@ -35,7 +35,8 @@
 | Claim flow UI | Not started | — |
 | Admin dashboard (seed, claims, moderation) | Done | `apps/web/app/(admin)/`, `apps/web/stores/adminStore.ts`, `apps/web/components/admin/` |
 | Landing page | Done | `apps/web/app/page.tsx`, `apps/web/components/landing/` |
-| Customer web fallback | Stubs only | `apps/web/app/restaurant/[id]/` |
+| Customer web fallback — profile page | Done (client-side) | `apps/web/app/restaurant/[id]/page.tsx`, `components/public/RestaurantHero.tsx` |
+| Customer web fallback — menu viewer | Done (client-side) | `apps/web/app/restaurant/[id]/menu/page.tsx`, `components/public/MenuTabs.tsx`, `components/public/MenuContent.tsx` |
 | Mobile screens | All stubbed, none implemented | `apps/mobile/app/` |
 | Legacy web app (CRA + React 18) | Running, reference only | `chooz-web/owner-web/` |
 | PRD v1.0 | Complete | `PRD.md` |
@@ -135,7 +136,7 @@ chooz/
 | 14 | Customer mobile menu viewer | 70% | — | 0% (stub) |
 | 15 | Customer mobile search + filters (Algolia) | 100% | — | 0% (stub) |
 | 16 | Customer mobile notes page | 0% | — | 0% (stub) |
-| 17 | Customer web fallback (SSR) | 100% | 0% (stub) | — |
+| 17 | Customer web fallback (SSR) | 100% | ~70% (client-side profile + menu done; SSR, OG, JSON-LD, app prompt pending) | — |
 | 18 | Deep linking + QR routing | 0% | 0% | 0% |
 | 19 | Trust & safety — ownership badges | 100% | 0% | 0% |
 | 20 | Admin dashboard P2 — owner support tools | 0% | 0% | — |
@@ -437,6 +438,32 @@ chooz/
 - #35 (mobile-responsive dashboard) is the next UI polish ticket
 - Firestore composite index is deployed to staging — may take a few minutes to build after deploy
 - `overflow-x: clip` in globals.css — watch for any side effects on other pages
+
+### 2026-02-22 — Session 14: Customer restaurant profile + menu viewer (web fallback)
+
+**What was done:**
+- **2-page customer web flow** — Split the stub `/restaurant/[id]` into a full 2-page experience matching the archived mobile app architecture:
+  - **Profile page** (`/restaurant/[id]`) — Hero with parabolic-bottom banner, 96px centered circular logo (brand red border) overlapping the separator, restaurant name, scrollable tag chips, address, phone, smart hours status
+  - **Menu page** (`/restaurant/[id]/menu`) — Sticky header (back arrow + restaurant name), sticky scrollable menu tabs, categories with dividers, item rows (name, 2-line description, price, unavailability chip)
+- **Smart hours status** — `getHoursStatus()` computes: Open / Closes soon (≤30 min) / Opens soon (≤60 min) / Closed · Opens at X / Closed today. Primary label is bold + colored (green/orange/red); secondary detail (e.g., "Opens tomorrow at 9AM") is muted.
+- **Menu availability** — `isMenuAvailable()` helper in `menuUtils.ts` checks `isActive`, `availableDays`, and `availableFrom`/`availableTo`. Unavailable menu tabs show a clock icon. Unavailable items render at 50% opacity with "Unavailable" chip.
+- **Tab caching** — Menu content (categories + items) is cached in local state keyed by `menuId`. Switching back to a previously-loaded tab skips the network fetch.
+- **Windowed layout** — Both pages use a white 640px card on `#FFFAEF` (light tan) background with box-shadow + `borderRadius: 3` at tablet/desktop breakpoints. Full-bleed on mobile.
+- **Not-found page** — Friendly branded page: full-color Chooz logo, "Hmm, we can't find that spot." with explanatory subtext, red "Explore restaurants →" link.
+- **Created ticket** — #46 (clickable address → Google Maps, phone → tel: link)
+
+**Key design decisions:**
+- Client-side rendering chosen over SSR to avoid Admin SDK complexity. SSR + OpenGraph + JSON-LD are tracked in #17 for a future session.
+- Parabolic banner bottom: `borderRadius: "0 0 50% 50% / 0 0 100px 100px"` — pure CSS, no SVG needed.
+- Logo positioned absolutely with `top: bannerHeight - LOGO_HALF` so it straddles the banner edge precisely.
+- No floating back button on profile page — the page is a destination (QR codes, direct links); `router.back()` is unreliable with no known previous route.
+- Hours always expanded (no toggle) — removed the collapsible pattern from initial implementation per user preference.
+
+**Key context for next session:**
+- Remaining #17 work: SSR/server components, OpenGraph meta tags, JSON-LD structured data, "Download the app" prompt
+- #46 (clickable address/phone) is a small follow-up for the profile page
+- #24 (owner preview button) is now unblocked — the customer view is live at `/restaurant/[id]`
+- `components/public/` is the new home for all customer-facing shared components
 
 ### 2026-02-22 — Session 13: Fix Storage security rules
 
