@@ -90,6 +90,7 @@ export default function SetupPage() {
         Fill in your restaurant details to get started on Chooz.
       </Typography>
       <ImageUploadSection
+        ownerUid={firebaseUser?.uid ?? ""}
         restaurantId={pendingId}
         bannerImageUrl={bannerUrl}
         logoImageUrl={logoUrl}

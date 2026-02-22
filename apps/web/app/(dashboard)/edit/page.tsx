@@ -185,6 +185,7 @@ export default function MenuEditPage() {
               </Typography>
 
               <CategoryList
+                ownerUid={firebaseUser?.uid ?? ""}
                 restaurantId={restaurant.id}
                 categories={currentCategories}
                 items={items}

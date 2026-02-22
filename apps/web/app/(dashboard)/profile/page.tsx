@@ -159,6 +159,7 @@ export default function ProfilePage() {
       </Typography>
       <ImageUploadSection
         variant="hero"
+        ownerUid={firebaseUser?.uid ?? ""}
         restaurantId={restaurant.id}
         bannerImageUrl={restaurant.bannerImageUrl}
         logoImageUrl={restaurant.logoImageUrl}

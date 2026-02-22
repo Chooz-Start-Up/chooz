@@ -69,7 +69,7 @@ chooz/
 | Item | `packages/services/src/firestore/item.ts` | Full CRUD for items |
 | Claim | `packages/services/src/firestore/claim.ts` | Create, review, status tracking, query all (admin) |
 | Admin (callables) | `packages/services/src/functions/index.ts` | `seedRestaurant`, `processClaim` via `httpsCallable` |
-| Storage | `packages/services/src/storage/` | Banner/logo/item image upload and delete, URL-based deletion |
+| Storage | `packages/services/src/storage/` | Banner/logo/item image upload and delete, URL-based deletion. Helpers require `ownerUid` as first param — embedded in path for ownership enforcement |
 | Env validation | `packages/services/src/env.ts` | Zod schema for Firebase config |
 | Error handling | `packages/services/src/errors.ts` | AppError with typed codes |
 
@@ -109,7 +109,7 @@ chooz/
 
 ### GitHub Issues (Monorepo — `Chooz-Start-Up/chooz`)
 
-**Closed (9):**
+**Closed (10):**
 
 | # | Title |
 |---|-------|
@@ -124,7 +124,7 @@ chooz/
 | 11 | feat: Admin dashboard P1 (seed, claims, moderation) |
 | 34 | feat: Landing page for restaurant owners |
 
-**Open (24):**
+**Open (34):**
 
 | # | Title | Backend | Web UI | Mobile UI |
 |---|-------|---------|--------|-----------|
@@ -153,6 +153,15 @@ chooz/
 | 32 | Research: restricted restaurant name change flow | — | — | — |
 | 33 | Research: customer report system for restaurant pages | — | — | — |
 | 35 | feat: Mobile-responsive dashboard + mobile editing warning | 0% | 0% | — |
+| 36 | fix: Storage rules allow any auth user to overwrite restaurant images (P0) | — | — | — |
+| 37 | fix: Algolia sync indexes items from unpublished restaurants and unavailable items (P0) | — | — | — |
+| 38 | infra: Run RTDB-to-Firestore production data migration and decommission legacy project (P0) | — | — | — |
+| 39 | infra: Provision Algolia API keys for staging and production environments (P0) | — | — | — |
+| 40 | feat: Require admin approval before owner-created restaurants are published (P1) | — | — | — |
+| 41 | fix: menuStore has no error state and silent failures on mutation operations (P1) | — | — | — |
+| 42 | research: Firebase web SDK vs React Native Firebase compatibility (P1) | — | — | — |
+| 43 | fix: deleteRestaurant does not cascade-delete subcollections or Storage objects (P2) | — | — | — |
+| 44 | fix: updateClaimRequest writes undeclared updatedAt field not on ClaimRequest type (P2) | — | — | — |
 
 ### Legacy Issues (chooz-web — `Chooz-Start-Up/chooz-web`)
 
@@ -198,6 +207,7 @@ chooz/
 - **Firebase Dynamic Links deprecated** — QR code deep linking needs a replacement solution before Phase 1 launch.
 - **Apple Sign-In required** — Apple requires it if you offer Google/Facebook sign-in on iOS. Must be added for mobile app. OAuthButtons component already includes Apple button.
 - **Legacy data is in Realtime Database** — migration script exists but hasn't been run against production data yet.
+- **Storage paths include `ownerUid`** — All restaurant image paths are `restaurants/{ownerUid}/{restaurantId}/...` (not `restaurants/{restaurantId}/...`). All storage helpers (`uploadBanner`, `uploadLogo`, `deleteBanner`, `deleteLogo`, `uploadItemImage`) take `ownerUid` as the first argument. Components that call these helpers (`ImageUploadSection`, `ItemEditDialog`) require an `ownerUid` prop — pass `firebaseUser?.uid ?? ""` from the parent page. Storage rules enforce `request.auth.uid == ownerUid` for writes; reads remain public.
 - **MUI 5 uses InputLabelProps, not slotProps** — TextField `slotProps` is MUI 6+. Use `InputLabelProps={{ shrink: true }}` and `InputProps` for adornments.
 - **Item visibility vs status badges are independent** — `isAvailable` controls whether the item shows on the customer menu at all. Status badges (Sold Out, New, etc.) are stored in the `tags[]` array and are visual indicators only. Changing a badge must NOT change `isAvailable`.
 - **Dietary attributes are also stored in `tags[]`** — Values like `"vegan"`, `"vegetarian"`, `"spicy-2"` coexist with status badges in the same array. The `DIETARY_ATTRIBUTES` constant in `@chooz/shared` defines the canonical list. Spicy levels are mutually exclusive (`"spicy-1"` through `"spicy-3"` — only one stored at a time).
@@ -427,6 +437,42 @@ chooz/
 - #35 (mobile-responsive dashboard) is the next UI polish ticket
 - Firestore composite index is deployed to staging — may take a few minutes to build after deploy
 - `overflow-x: clip` in globals.css — watch for any side effects on other pages
+
+### 2026-02-22 — Session 13: Fix Storage security rules
+
+**What was done:**
+- **Closed #36** — Fixed Firebase Storage rules to enforce restaurant ownership on writes.
+- **Path restructure** — Changed all storage paths from `restaurants/{restaurantId}/...` to `restaurants/{ownerUid}/{restaurantId}/...`. This allows `storage.rules` to verify ownership with `request.auth.uid == ownerUid` without a Firestore `get()` call (which Storage rules don't support).
+- **`storage.rules`** — Replaced the blanket authenticated-user write with ownership-checked `create`/`update`/`delete` rules. Reads remain public.
+- **`packages/services/src/storage/index.ts`** — Added `ownerUid` as the first parameter to all 5 convenience helpers (`uploadBanner`, `uploadLogo`, `deleteBanner`, `deleteLogo`, `uploadItemImage`).
+- **Threaded `ownerUid` through the component tree** — Updated `ImageUploadSection`, `ItemEditDialog`, `CategorySection`, `CategoryList`; updated callers in setup page, profile page, and edit page to pass `firebaseUser?.uid ?? ""`.
+- `pnpm typecheck` passes cleanly (7/7 tasks).
+
+**Key decisions:**
+- Path-based auth chosen over Custom Claims or Cloud Function proxy — simpler, no token refresh needed, no Cloud Function changes.
+- `deleteImageByUrl` unchanged — it decodes the path from the download URL and the storage rule enforces the correct ownership check automatically.
+- If a restaurant is claimed and `ownerUid` changes, old images under the previous owner's path become immutable (new owner can't delete them) but their Firestore download URLs remain valid. Acceptable for now — cleanup can be handled during claim flow implementation.
+
+**Key context for next session:**
+- All storage writes now require `ownerUid` to match `request.auth.uid` — no regression for owner dashboard flows.
+- Any future storage upload feature must pass `ownerUid` to the helpers.
+- Deploy `storage.rules` to staging before testing image uploads end-to-end.
+
+### 2026-02-22 — Session 12: Codebase audit and issue triage
+
+**What was done:**
+- **Full double-check audit** — Ran `double-check` agent against the entire codebase. Reviewed brain.md, CLAUDE.md, PRD, source files, git history, and all open issues.
+- **9 issues filed** (#36–#44) for findings not previously tracked. Each has a P0/P1/P2 priority indicator in the issue body:
+  - **P0:** #36 (Storage rules — no ownership enforcement), #37 (Algolia indexes unpublished content), #38 (RTDB → Firestore production migration), #39 (Algolia credentials are placeholders)
+  - **P1:** #40 (admin approval gate before publish), #41 (menuStore silent failures + no tests), #42 (Firebase web SDK vs RN Firebase research)
+  - **P2:** #43 (deleteRestaurant cascade gap), #44 (updateClaimRequest type mismatch)
+- **Updated `double-check` agent** (`~/.claude/agents/double-check.md`) — Added Phase 6: after producing the report, the agent now automatically checks existing issues and files GitHub tickets for any untracked findings with P0/P1/P2 priority labels.
+
+**Key context for next session:**
+- No code was changed this session — all work was audit and process.
+- P0 issues (#36–#39) are the most urgent: storage rules gap is actively exploitable once customer auth ships, Algolia is non-functional on staging, and the production migration hasn't run.
+- `menuStore` (#41) has no tests and silently swallows errors — same class of issue fixed in adminStore (Session 9) that still needs to be applied here.
+- The Firebase web SDK vs. RN Firebase decision (#42) must be resolved before mobile implementation begins.
 
 ### 2026-02-19 — Session 11: Hero banner layout, collapsible sidebar, and UX polish
 

@@ -15,6 +15,7 @@ import { storageService, AppError } from "@chooz/services";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 interface ImageUploadSectionProps {
+  ownerUid: string;
   restaurantId: string;
   bannerImageUrl: string | null;
   logoImageUrl: string | null;
@@ -23,6 +24,7 @@ interface ImageUploadSectionProps {
 }
 
 export function ImageUploadSection({
+  ownerUid,
   restaurantId,
   bannerImageUrl,
   logoImageUrl,
@@ -56,7 +58,7 @@ export function ImageUploadSection({
     setError(null);
     setBannerLoading(true);
     try {
-      const url = await storageService.uploadBanner(restaurantId, file);
+      const url = await storageService.uploadBanner(ownerUid, restaurantId, file);
       await onImageUpdated("bannerImageUrl", url);
     } catch (err) {
       setError(err instanceof AppError ? err.message : "Failed to upload banner.");
@@ -79,7 +81,7 @@ export function ImageUploadSection({
     setError(null);
     setLogoLoading(true);
     try {
-      const url = await storageService.uploadLogo(restaurantId, file);
+      const url = await storageService.uploadLogo(ownerUid, restaurantId, file);
       await onImageUpdated("logoImageUrl", url);
     } catch (err) {
       setError(err instanceof AppError ? err.message : "Failed to upload logo.");
@@ -92,7 +94,7 @@ export function ImageUploadSection({
     setError(null);
     setBannerLoading(true);
     try {
-      await storageService.deleteBanner(restaurantId);
+      await storageService.deleteBanner(ownerUid, restaurantId);
       await onImageUpdated("bannerImageUrl", null);
     } catch (err) {
       setError(err instanceof AppError ? err.message : "Failed to delete banner.");
@@ -105,7 +107,7 @@ export function ImageUploadSection({
     setError(null);
     setLogoLoading(true);
     try {
-      await storageService.deleteLogo(restaurantId);
+      await storageService.deleteLogo(ownerUid, restaurantId);
       await onImageUpdated("logoImageUrl", null);
     } catch (err) {
       setError(err instanceof AppError ? err.message : "Failed to delete logo.");

@@ -36,30 +36,33 @@ export async function deleteImage(path: string): Promise<void> {
   }
 }
 
-// Convenience helpers for restaurant images
-export function uploadBanner(restaurantId: string, file: Blob | Uint8Array | ArrayBuffer) {
-  return uploadImage(`restaurants/${restaurantId}/banner`, file);
+// Convenience helpers for restaurant images.
+// ownerUid must be the authenticated user's UID — it is embedded in the path
+// so that storage.rules can enforce ownership without a Firestore lookup.
+export function uploadBanner(ownerUid: string, restaurantId: string, file: Blob | Uint8Array | ArrayBuffer) {
+  return uploadImage(`restaurants/${ownerUid}/${restaurantId}/banner`, file);
 }
 
-export function uploadLogo(restaurantId: string, file: Blob | Uint8Array | ArrayBuffer) {
-  return uploadImage(`restaurants/${restaurantId}/logo`, file);
+export function uploadLogo(ownerUid: string, restaurantId: string, file: Blob | Uint8Array | ArrayBuffer) {
+  return uploadImage(`restaurants/${ownerUid}/${restaurantId}/logo`, file);
 }
 
-export function deleteBanner(restaurantId: string) {
-  return deleteImage(`restaurants/${restaurantId}/banner`);
+export function deleteBanner(ownerUid: string, restaurantId: string) {
+  return deleteImage(`restaurants/${ownerUid}/${restaurantId}/banner`);
 }
 
-export function deleteLogo(restaurantId: string) {
-  return deleteImage(`restaurants/${restaurantId}/logo`);
+export function deleteLogo(ownerUid: string, restaurantId: string) {
+  return deleteImage(`restaurants/${ownerUid}/${restaurantId}/logo`);
 }
 
 // Item images
 export function uploadItemImage(
+  ownerUid: string,
   restaurantId: string,
   imageId: string,
   file: Blob | Uint8Array | ArrayBuffer,
 ) {
-  return uploadImage(`restaurants/${restaurantId}/items/${imageId}`, file);
+  return uploadImage(`restaurants/${ownerUid}/${restaurantId}/items/${imageId}`, file);
 }
 
 /**

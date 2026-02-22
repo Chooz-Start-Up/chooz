@@ -45,6 +45,7 @@ type ItemFormData = Omit<Item, "id" | "createdAt" | "updatedAt" | "sortOrder">;
 
 interface ItemEditDialogProps {
   open: boolean;
+  ownerUid: string;
   restaurantId: string;
   item: Item | null; // null = create mode
   onClose: () => void;
@@ -63,7 +64,7 @@ const emptyForm: ItemFormData = {
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
-export function ItemEditDialog({ open, restaurantId, item, onClose, onSave }: ItemEditDialogProps) {
+export function ItemEditDialog({ open, ownerUid, restaurantId, item, onClose, onSave }: ItemEditDialogProps) {
   const [form, setForm] = useState<ItemFormData>(emptyForm);
   const [priceText, setPriceText] = useState("0.00");
   const [saving, setSaving] = useState(false);
@@ -121,7 +122,7 @@ export function ItemEditDialog({ open, restaurantId, item, onClose, onSave }: It
         }
       }
       const imageId = crypto.randomUUID();
-      const url = await storageService.uploadItemImage(restaurantId, imageId, file);
+      const url = await storageService.uploadItemImage(ownerUid, restaurantId, imageId, file);
       setForm((f) => ({ ...f, imageUrl: url }));
     } catch {
       setImageError("Failed to upload image. Please try again.");
