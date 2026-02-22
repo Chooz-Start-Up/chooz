@@ -14,7 +14,7 @@ import { ImageUploadSection } from "@/components/restaurant/ImageUploadSection";
 export default function SetupPage() {
   const router = useRouter();
   const { firebaseUser } = useAuthStore();
-  const { restaurant, fetchRestaurantForOwner, createRestaurant, updateRestaurant } = useRestaurantStore();
+  const { restaurants, fetchRestaurantForOwner, createRestaurant, updateRestaurant } = useRestaurantStore();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -29,10 +29,10 @@ export default function SetupPage() {
   }, [firebaseUser, fetchRestaurantForOwner]);
 
   useEffect(() => {
-    if (!loading && restaurant) {
+    if (!loading && restaurants.length > 0) {
       router.replace("/profile");
     }
-  }, [loading, restaurant, router]);
+  }, [loading, restaurants.length, router]);
 
   if (loading) {
     return (
@@ -42,7 +42,7 @@ export default function SetupPage() {
     );
   }
 
-  if (restaurant) return null;
+  if (restaurants.length > 0) return null;
 
   const handleImageUpdated = async (field: "bannerImageUrl" | "logoImageUrl", url: string | null) => {
     if (field === "bannerImageUrl") setBannerUrl(url);

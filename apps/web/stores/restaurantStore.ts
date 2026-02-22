@@ -3,9 +3,10 @@ import type { Restaurant } from "@chooz/shared";
 import { restaurantService } from "@chooz/services";
 
 interface RestaurantState {
-  restaurant: Restaurant | null;
-  setRestaurant: (restaurant: Restaurant | null) => void;
-  fetchRestaurantForOwner: (ownerUid: string) => Promise<Restaurant | null>;
+  restaurants: Restaurant[];
+  selectedRestaurantId: string | null;
+  setSelectedRestaurantId: (id: string | null) => void;
+  fetchRestaurantForOwner: (ownerUid: string) => Promise<void>;
   createRestaurant: (
     data: Omit<Restaurant, "id" | "createdAt" | "updatedAt">,
     id?: string,
@@ -17,27 +18,37 @@ interface RestaurantState {
 }
 
 export const useRestaurantStore = create<RestaurantState>((set) => ({
-  restaurant: null,
-  setRestaurant: (restaurant) => set({ restaurant }),
+  restaurants: [],
+  selectedRestaurantId: null,
+  setSelectedRestaurantId: (id) => set({ selectedRestaurantId: id }),
 
   fetchRestaurantForOwner: async (ownerUid: string) => {
     const results = await restaurantService.getRestaurantsByOwner(ownerUid);
-    const restaurant = results[0] ?? null;
-    set({ restaurant });
-    return restaurant;
+    set({
+      restaurants: results,
+      selectedRestaurantId: results[0]?.id ?? null,
+    });
   },
 
   createRestaurant: async (data, id?) => {
     id = id ?? restaurantService.generateRestaurantId();
     await restaurantService.createRestaurant(id, data);
     const created = await restaurantService.getRestaurant(id);
-    set({ restaurant: created });
+    const createdId = id;
+    set((state) => ({
+      restaurants: created ? [...state.restaurants, created] : state.restaurants,
+      selectedRestaurantId: createdId,
+    }));
     return id;
   },
 
   updateRestaurant: async (id, data) => {
     await restaurantService.updateRestaurant(id, data);
     const updated = await restaurantService.getRestaurant(id);
-    set({ restaurant: updated });
+    set((state) => ({
+      restaurants: state.restaurants.map((r) =>
+        r.id === id ? (updated ?? r) : r,
+      ),
+    }));
   },
 }));

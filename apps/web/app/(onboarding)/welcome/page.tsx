@@ -14,7 +14,7 @@ import { useRestaurantStore } from "@/stores/restaurantStore";
 export default function WelcomePage() {
   const router = useRouter();
   const { firebaseUser, profile } = useAuthStore();
-  const { restaurant, fetchRestaurantForOwner } = useRestaurantStore();
+  const { restaurants, fetchRestaurantForOwner } = useRestaurantStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,10 +23,10 @@ export default function WelcomePage() {
   }, [firebaseUser, fetchRestaurantForOwner]);
 
   useEffect(() => {
-    if (!loading && restaurant) {
+    if (!loading && restaurants.length > 0) {
       router.replace("/profile");
     }
-  }, [loading, restaurant, router]);
+  }, [loading, restaurants.length, router]);
 
   if (loading) {
     return (
@@ -36,7 +36,7 @@ export default function WelcomePage() {
     );
   }
 
-  if (restaurant) return null;
+  if (restaurants.length > 0) return null;
 
   const displayName = profile?.displayName?.split(" ")[0] ?? "there";
 

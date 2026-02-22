@@ -16,7 +16,8 @@ import { ConfirmChangesDialog, computeChanges } from "@/components/restaurant/Co
 export default function ProfilePage() {
   const router = useRouter();
   const { firebaseUser } = useAuthStore();
-  const { restaurant, fetchRestaurantForOwner, updateRestaurant } = useRestaurantStore();
+  const { restaurants, selectedRestaurantId, fetchRestaurantForOwner, updateRestaurant } = useRestaurantStore();
+  const restaurant = restaurants.find((r) => r.id === selectedRestaurantId) ?? null;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [snackOpen, setSnackOpen] = useState(false);

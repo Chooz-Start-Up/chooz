@@ -13,7 +13,7 @@ import { CategoryList } from "@/components/menu/CategoryList";
 
 export default function MenuEditPage() {
   const { firebaseUser } = useAuthStore();
-  const { restaurant, fetchRestaurantForOwner } = useRestaurantStore();
+  const { restaurants, selectedRestaurantId, fetchRestaurantForOwner } = useRestaurantStore();
   const {
     menus,
     categories,
@@ -41,16 +41,16 @@ export default function MenuEditPage() {
     reorderItems,
   } = useMenuStore();
 
-  const restaurantId = restaurant?.id ?? null;
+  const restaurantId = selectedRestaurantId;
   const selectedMenu = menus.find((m) => m.id === selectedMenuId) ?? null;
   const currentCategories = selectedMenuId ? (categories[selectedMenuId] ?? []) : [];
 
   // Load restaurant
   useEffect(() => {
-    if (firebaseUser && !restaurant) {
+    if (firebaseUser && restaurants.length === 0) {
       fetchRestaurantForOwner(firebaseUser.uid);
     }
-  }, [firebaseUser, restaurant, fetchRestaurantForOwner]);
+  }, [firebaseUser, restaurants.length, fetchRestaurantForOwner]);
 
   // Load menus when restaurant is available
   useEffect(() => {
@@ -130,7 +130,7 @@ export default function MenuEditPage() {
     [restaurantId, selectedMenuId, menus, categories, items, reorderMenus, reorderCategories, reorderItems],
   );
 
-  if (!restaurant || loading) {
+  if (!restaurantId || loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
         <CircularProgress />
@@ -146,11 +146,11 @@ export default function MenuEditPage() {
           menus={menus}
           selectedMenuId={selectedMenuId}
           onSelect={selectMenu}
-          onAdd={(name) => createMenu(restaurant.id, name)}
-          onDuplicate={(menuId) => duplicateMenu(restaurant.id, menuId)}
-          onRename={(menuId, name) => renameMenu(restaurant.id, menuId, name)}
-          onDelete={(menuId) => deleteMenu(restaurant.id, menuId)}
-          onUpdateSettings={(menuId, data) => updateMenuSettings(restaurant.id, menuId, data)}
+          onAdd={(name) => createMenu(restaurantId!, name)}
+          onDuplicate={(menuId) => duplicateMenu(restaurantId!, menuId)}
+          onRename={(menuId, name) => renameMenu(restaurantId!, menuId, name)}
+          onDelete={(menuId) => deleteMenu(restaurantId!, menuId)}
+          onUpdateSettings={(menuId, data) => updateMenuSettings(restaurantId!, menuId, data)}
           getCascadeInfo={getCascadeInfo}
         />
 
@@ -186,25 +186,25 @@ export default function MenuEditPage() {
 
               <CategoryList
                 ownerUid={firebaseUser?.uid ?? ""}
-                restaurantId={restaurant.id}
+                restaurantId={restaurantId!}
                 categories={currentCategories}
                 items={items}
-                onAddCategory={(name) => createCategory(restaurant.id, selectedMenuId!, name)}
+                onAddCategory={(name) => createCategory(restaurantId!, selectedMenuId!, name)}
                 onRenameCategory={(catId, name) =>
-                  renameCategory(restaurant.id, selectedMenuId!, catId, name)
+                  renameCategory(restaurantId!, selectedMenuId!, catId, name)
                 }
                 onUpdateCategory={(catId, data) =>
-                  updateCategory(restaurant.id, selectedMenuId!, catId, data)
+                  updateCategory(restaurantId!, selectedMenuId!, catId, data)
                 }
-                onDeleteCategory={(catId) => deleteCategory(restaurant.id, selectedMenuId!, catId)}
+                onDeleteCategory={(catId) => deleteCategory(restaurantId!, selectedMenuId!, catId)}
                 onCreateItem={(catId, data) =>
-                  createItem(restaurant.id, selectedMenuId!, catId, data)
+                  createItem(restaurantId!, selectedMenuId!, catId, data)
                 }
                 onUpdateItem={(catId, itemId, data) =>
-                  updateItem(restaurant.id, selectedMenuId!, catId, itemId, data)
+                  updateItem(restaurantId!, selectedMenuId!, catId, itemId, data)
                 }
                 onDeleteItem={(catId, itemId) =>
-                  deleteItem(restaurant.id, selectedMenuId!, catId, itemId)
+                  deleteItem(restaurantId!, selectedMenuId!, catId, itemId)
                 }
               />
             </>
