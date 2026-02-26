@@ -15,8 +15,10 @@ import TextField from "@mui/material/TextField";
 import AddIcon from "@mui/icons-material/Add";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import SmartphoneIcon from "@mui/icons-material/Smartphone";
 import SettingsIcon from "@mui/icons-material/Settings";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import Tooltip from "@mui/material/Tooltip";
 import { Draggable, Droppable } from "@hello-pangea/dnd";
 import type { Menu } from "@chooz/shared";
 import { InlineEdit } from "./InlineEdit";
@@ -27,6 +29,7 @@ import { QRCodePanel } from "./QRCodePanel";
 interface MenuSidebarProps {
   menus: Menu[];
   selectedMenuId: string | null;
+  onPreview: () => void;
   onSelect: (menuId: string) => void;
   onAdd: (name: string) => Promise<void>;
   onDuplicate: (menuId: string) => Promise<void>;
@@ -39,6 +42,7 @@ interface MenuSidebarProps {
 export function MenuSidebar({
   menus,
   selectedMenuId,
+  onPreview,
   onSelect,
   onAdd,
   onDuplicate,
@@ -109,7 +113,14 @@ export function MenuSidebar({
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
           Menus
         </Typography>
-        <QRCodePanel />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Tooltip title="Preview menu">
+            <IconButton size="small" onClick={onPreview}>
+              <SmartphoneIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <QRCodePanel />
+        </Box>
       </Box>
 
       <Droppable droppableId="menus" type="MENU">

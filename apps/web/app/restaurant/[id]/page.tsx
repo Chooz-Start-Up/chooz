@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Fab from "@mui/material/Fab";
+import Paper from "@mui/material/Paper";
 import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Link from "next/link";
 import { use } from "react";
 import type { Restaurant } from "@chooz/shared";
 import { restaurantService } from "@chooz/services";
+import { useAuthStore } from "@/stores/authStore";
 import { RestaurantHero } from "@/components/public/RestaurantHero";
 
 function PageSkeleton() {
@@ -33,6 +36,7 @@ export default function RestaurantPage({ params }: { params: Promise<{ id: strin
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const { firebaseUser } = useAuthStore();
 
   useEffect(() => {
     restaurantService
@@ -91,7 +95,9 @@ export default function RestaurantPage({ params }: { params: Promise<{ id: strin
 
   if (!restaurant) return null;
 
-  if (!restaurant.isPublished) {
+  const isOwner = !!firebaseUser && firebaseUser.uid === restaurant.ownerUid;
+
+  if (!restaurant.isPublished && !isOwner) {
     return (
       <Box
         sx={{
@@ -130,9 +136,24 @@ export default function RestaurantPage({ params }: { params: Promise<{ id: strin
     );
   }
 
+  const bannerVisible = isOwner && !restaurant.isPublished;
+
   return (
     // Tan page background — the card "floats" on it at wider viewports
-    <Box sx={{ minHeight: "100vh", bgcolor: "#FFFAEF" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#FFFAEF", pt: bannerVisible ? "48px" : 0 }}>
+      {bannerVisible && (
+        <Paper elevation={0} sx={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 1400,
+          bgcolor: "warning.dark", color: "white",
+          display: "flex", alignItems: "center",
+          px: 2, py: 1, gap: 1,
+        }}>
+          <VisibilityOffIcon fontSize="small" />
+          <Typography variant="body2">
+            Not visible to customers — publish your restaurant from your dashboard to share it.
+          </Typography>
+        </Paper>
+      )}
       <Box
         sx={{
           maxWidth: 640,

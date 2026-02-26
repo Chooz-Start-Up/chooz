@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+import type { SlideProps } from "@mui/material/Slide";
 import { useEffect, useCallback, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -10,9 +12,12 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Slide from "@mui/material/Slide";
 import Typography from "@mui/material/Typography";
+import CloseIcon from "@mui/icons-material/Close";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { AppError } from "@chooz/services";
 import { useAuthStore } from "@/stores/authStore";
@@ -20,6 +25,13 @@ import { useRestaurantStore } from "@/stores/restaurantStore";
 import { useMenuStore } from "@/stores/menuStore";
 import { MenuSidebar } from "@/components/menu/MenuSidebar";
 import { CategoryList } from "@/components/menu/CategoryList";
+import { MenuContent } from "@/components/public/MenuContent";
+import { MenuTabs } from "@/components/public/MenuTabs";
+
+const SlideUp = React.forwardRef<HTMLElement, SlideProps>((props, ref) => (
+  <Slide {...props} direction="up" ref={ref} />
+));
+SlideUp.displayName = "SlideUp";
 
 export default function MenuEditPage() {
   const { firebaseUser } = useAuthStore();
@@ -57,6 +69,13 @@ export default function MenuEditPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewMenuId, setPreviewMenuId] = useState<string | null>(null);
+
+  const handleOpenPreview = () => {
+    setPreviewMenuId(selectedMenuId);
+    setPreviewOpen(true);
+  };
 
   const restaurantId = selectedRestaurantId;
   const selectedMenu = menus.find((m) => m.id === selectedMenuId) ?? null;
@@ -186,6 +205,7 @@ export default function MenuEditPage() {
         <MenuSidebar
           menus={menus}
           selectedMenuId={selectedMenuId}
+          onPreview={handleOpenPreview}
           onSelect={selectMenu}
           onAdd={(name) => createMenu(restaurantId!, name)}
           onDuplicate={(menuId) => duplicateMenu(restaurantId!, menuId)}
@@ -287,6 +307,15 @@ export default function MenuEditPage() {
               </Button>
               <Button
                 variant="contained"
+                color="secondary"
+                onClick={handleOpenPreview}
+                disabled={isSaving}
+                sx={{ textTransform: "none" }}
+              >
+                Preview
+              </Button>
+              <Button
+                variant="contained"
                 onClick={handleUpdate}
                 disabled={isSaving}
                 sx={{ textTransform: "none" }}
@@ -297,6 +326,80 @@ export default function MenuEditPage() {
           </Box>
         </Paper>
       </Slide>
+
+      {/* Full-width unsaved-changes banner — shown above the preview modal */}
+      {previewOpen && hasPendingChanges && (
+        <Box sx={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 1302,
+          bgcolor: "warning.dark", color: "white",
+          display: "flex", alignItems: "center",
+          px: 2, py: 1.5, gap: 1,
+        }}>
+          <VisibilityOffIcon fontSize="small" />
+          <Typography variant="body2">
+            Previewing unsaved changes — these won&apos;t be visible to customers until you click Update.
+          </Typography>
+        </Box>
+      )}
+
+      {/* Close button — just to the left of the phone frame, below banner if visible */}
+      {previewOpen && (
+        <IconButton
+          onClick={() => setPreviewOpen(false)}
+          aria-label="Close preview"
+          sx={{
+            position: "fixed",
+            top: hasPendingChanges ? 56 : 16,
+            left: "calc(50% - 195px - 48px)",
+            zIndex: 1302,
+            bgcolor: "rgba(0,0,0,0.45)", color: "white",
+            "&:hover": { bgcolor: "rgba(0,0,0,0.65)" },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      )}
+
+      {/* Preview Dialog — phone-proportioned window */}
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        TransitionComponent={SlideUp}
+        PaperProps={{
+          sx: {
+            width: 390,
+            height: "min(85vh, 760px)",
+            maxWidth: "100%",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            borderRadius: 3,
+          },
+        }}
+      >
+        <Box sx={{
+          flexShrink: 0,
+          px: 2, py: 1.25, borderBottom: 1, borderColor: "divider",
+        }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            {restaurants.find((r) => r.id === restaurantId)?.name ?? "Preview"}
+          </Typography>
+        </Box>
+
+        <Box sx={{ flex: 1, overflow: "auto" }}>
+          <MenuTabs
+            menus={menus}
+            selectedMenuId={previewMenuId}
+            onChange={setPreviewMenuId}
+          />
+          <MenuContent
+            menu={menus.find((m) => m.id === previewMenuId)}
+            categories={previewMenuId ? (categories[previewMenuId] ?? []) : []}
+            items={items}
+            loading={false}
+          />
+        </Box>
+      </Dialog>
 
       {/* Save confirm dialog */}
       <Dialog

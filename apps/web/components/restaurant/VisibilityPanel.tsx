@@ -16,10 +16,11 @@ import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import CheckIcon from "@mui/icons-material/Check";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DownloadIcon from "@mui/icons-material/Download";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PrintIcon from "@mui/icons-material/Print";
-import CheckIcon from "@mui/icons-material/Check";
 import { useRestaurantStore } from "@/stores/restaurantStore";
 
 export function VisibilityPanel() {
@@ -123,11 +124,23 @@ export function VisibilityPanel() {
     <Paper variant="outlined" sx={{ p: 3, mb: 3, bgcolor: "background.paper" }}>
       {/* ── Visibility ── */}
       <Typography variant="h6" sx={{ mb: 0.5 }}>
-        Publish & Share
+        Visibility & Sharing
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
         Control visibility and share your public page.
       </Typography>
+      <Button
+        component="a"
+        href={`/restaurant/${selectedRestaurantId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        variant="outlined"
+        size="small"
+        startIcon={<OpenInNewIcon />}
+        sx={{ textTransform: "none", mb: 2 }}
+      >
+        Preview
+      </Button>
       <Divider sx={{ mb: 2 }} />
 
       {/* Listed toggle */}

@@ -3,14 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
 import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Link from "next/link";
 import { use } from "react";
 import type { Category, Item, Menu, Restaurant } from "@chooz/shared";
 import { categoryService, itemService, menuService, restaurantService } from "@chooz/services";
+import { useAuthStore } from "@/stores/authStore";
 import { MenuContent } from "@/components/public/MenuContent";
 import { MenuTabs } from "@/components/public/MenuTabs";
 import { isMenuAvailable } from "@/components/public/menuUtils";
@@ -36,6 +39,7 @@ export default function MenuPage({ params }: { params: Promise<{ id: string }> }
   const [menuCache, setMenuCache] = useState<MenuCache>({});
   const [menuLoading, setMenuLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const { firebaseUser } = useAuthStore();
 
   // Fetch restaurant name + menus on mount
   useEffect(() => {
@@ -93,7 +97,9 @@ export default function MenuPage({ params }: { params: Promise<{ id: string }> }
   const selectedMenu = menus.find((m) => m.id === selectedMenuId);
   const cached = selectedMenuId ? menuCache[selectedMenuId] : undefined;
 
-  if (!pageLoading && restaurant?.isMenuReady === false) {
+  const isOwner = !!firebaseUser && !!restaurant && firebaseUser.uid === restaurant.ownerUid;
+
+  if (!pageLoading && restaurant?.isMenuReady === false && !isOwner) {
     return (
       <Box
         sx={{
@@ -130,8 +136,28 @@ export default function MenuPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
+  const bannerMessage = restaurant && !restaurant.isPublished
+    ? "Restaurant not published — customers can't see this menu yet."
+    : "Menu isn't enabled — customers see a \"coming soon\" page.";
+  const bannerVisible = isOwner
+    && !!restaurant
+    && (!restaurant.isPublished || restaurant.isMenuReady === false);
+
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#FFFAEF" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#FFFAEF", pt: bannerVisible ? "48px" : 0 }}>
+      {bannerVisible && (
+        <Paper elevation={0} sx={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 1400,
+          bgcolor: "warning.dark", color: "white",
+          display: "flex", alignItems: "center",
+          px: 2, py: 1, gap: 1,
+        }}>
+          <VisibilityOffIcon fontSize="small" />
+          <Typography variant="body2">
+            {bannerMessage}
+          </Typography>
+        </Paper>
+      )}
     <Box sx={{ maxWidth: 640, mx: "auto", pb: 6, bgcolor: "white", boxShadow: { xs: "none", sm: 4 }, borderRadius: { xs: 0, sm: 3 }, overflow: "hidden", minHeight: "100vh" }}>
       {/* Header */}
       {pageLoading ? (
