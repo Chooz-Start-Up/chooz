@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Paper from "@mui/material/Paper";
+import Slide from "@mui/material/Slide";
 import Typography from "@mui/material/Typography";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
+import { AppError } from "@chooz/services";
 import { useAuthStore } from "@/stores/authStore";
 import { useRestaurantStore } from "@/stores/restaurantStore";
 import { useMenuStore } from "@/stores/menuStore";
@@ -20,6 +30,7 @@ export default function MenuEditPage() {
     items,
     selectedMenuId,
     loading,
+    hasPendingChanges,
     fetchMenus,
     createMenu,
     duplicateMenu,
@@ -39,7 +50,13 @@ export default function MenuEditPage() {
     updateItem,
     deleteItem,
     reorderItems,
+    commitPendingChanges,
+    discardPendingChanges,
   } = useMenuStore();
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const restaurantId = selectedRestaurantId;
   const selectedMenu = menus.find((m) => m.id === selectedMenuId) ?? null;
@@ -130,6 +147,30 @@ export default function MenuEditPage() {
     [restaurantId, selectedMenuId, menus, categories, items, reorderMenus, reorderCategories, reorderItems],
   );
 
+  const handleUpdate = () => {
+    setSaveError(null);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirm = async () => {
+    setIsSaving(true);
+    try {
+      await Promise.all([
+        commitPendingChanges(),
+        new Promise((resolve) => setTimeout(resolve, 600)),
+      ]);
+      setConfirmOpen(false);
+    } catch (e) {
+      setSaveError(e instanceof AppError ? e.message : "Failed to save. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDiscard = async () => {
+    if (restaurantId) await discardPendingChanges(restaurantId);
+  };
+
   if (!restaurantId || loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
@@ -155,7 +196,7 @@ export default function MenuEditPage() {
         />
 
         {/* Right content area */}
-        <Box sx={{ flex: 1, overflow: "auto", p: 3 }}>
+        <Box sx={{ flex: 1, overflow: "auto", p: 3, pb: hasPendingChanges ? 10 : 3 }}>
           {!selectedMenu ? (
             <Box
               sx={{
@@ -211,6 +252,88 @@ export default function MenuEditPage() {
           )}
         </Box>
       </Box>
+
+      {/* Sticky "Unsaved changes" bar */}
+      <Slide direction="up" in={hasPendingChanges} mountOnEnter unmountOnExit>
+        <Paper
+          elevation={8}
+          sx={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1200,
+            borderTop: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Box
+            sx={{
+              maxWidth: 960,
+              mx: "auto",
+              px: 3,
+              py: 1.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Unsaved changes
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.5 }}>
+              <Button onClick={handleDiscard} disabled={isSaving} sx={{ textTransform: "none" }}>
+                Discard
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleUpdate}
+                disabled={isSaving}
+                sx={{ textTransform: "none" }}
+              >
+                Update
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      </Slide>
+
+      {/* Save confirm dialog */}
+      <Dialog
+        open={confirmOpen}
+        onClose={() => !isSaving && setConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Save menu changes?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Your changes will be saved and visible to customers.
+          </DialogContentText>
+          {saveError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {saveError}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirmOpen(false)}
+            disabled={isSaving}
+            sx={{ textTransform: "none" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirm}
+            disabled={isSaving}
+            sx={{ textTransform: "none" }}
+          >
+            {isSaving ? "Saving…" : "Confirm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </DragDropContext>
   );
 }

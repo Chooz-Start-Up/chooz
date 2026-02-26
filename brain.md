@@ -217,10 +217,34 @@ chooz/
 - **Dietary attributes are also stored in `tags[]`** — Values like `"vegan"`, `"vegetarian"`, `"spicy-2"` coexist with status badges in the same array. The `DIETARY_ATTRIBUTES` constant in `@chooz/shared` defines the canonical list. Spicy levels are mutually exclusive (`"spicy-1"` through `"spicy-3"` — only one stored at a time).
 - **`@mui/icons-material/Eco` does not exist** — Use `Grass` instead for vegetarian icon. The installed MUI 5 version doesn't include the `Eco` icon.
 - **Category type has `isVisible` field** — Added in the menu builder session. Controls whether the category appears on the customer menu. Existing categories in Firestore may not have this field — converters should handle the default.
+- **Menu editor uses staged writes** — All `menuStore` mutations update local state immediately but are queued as thunks. Nothing hits Firestore until `commitPendingChanges()` is called (via the "Update" → "Confirm" flow on `/edit`). `discardPendingChanges()` re-fetches from Firestore and clears the queue. Local-only delete optimization: if a resource was created and deleted before commit, both ops are removed — zero Firestore calls.
 
 ---
 
 ## Session Log
+
+### 2026-02-25 — Session 16: Staged menu editor with commit/discard confirm dialog
+
+**What was done:**
+- **Staged edit queue in `menuStore`** — All 14 write operations (menu/category/item CRUD + reorder) now update local state immediately and enqueue a `() => Promise<void>` thunk instead of writing to Firestore directly. Queue entries are keyed by resource (`menu:rename:${id}`, `cat:create:${id}`, `item:reorder:${catId}`, etc.); enqueueing with an existing key replaces it (deduplication).
+- **`commitPendingChanges`** — Executes all queued ops sequentially (to avoid races like create-before-update), sets `saving: true` during execution, clears queue on success, rethrows `toAppError(error)` on failure.
+- **`discardPendingChanges`** — Clears the queue and re-fetches menus + current menu's categories from Firestore. Items re-fetch automatically via the existing `useEffect` chain on the edit page.
+- **Local-only delete optimization** — `deleteItem`, `deleteCategory`, and `deleteMenu` check whether the resource exists only in the pending queue (never committed to Firestore). If so, they remove the create op (and any update ops) instead of enqueueing a delete — zero Firestore calls for the round-trip.
+- **No-op guards** — `updateMenuSettings`, `updateCategory`, and `updateItem` compare incoming data against current state before enqueueing. Prevents the bar from appearing when item edit dialogs or category settings are closed without changes.
+- **`duplicateMenu` staged** — Fully staged: pre-generates all IDs at call time, builds local state instantly (menu + categories + items with fake timestamps), enqueues the full cascade as a single `menu:create:${newMenuId}` thunk. Discard removes the duplicate with zero Firestore calls.
+- **Sticky "Unsaved changes" bar** (`edit/page.tsx`) — `Slide`-animated `Paper` fixed to the bottom when `hasPendingChanges`. "Discard" and "Update" buttons. Content area bottom padding expands to `pb: 10` to prevent content being hidden under the bar.
+- **Save confirm dialog** — "Update" opens a Dialog with "Save menu changes?" / Cancel / Confirm. Local `isSaving` state (not the store's `saving`) gates button text ("Saving…") and disabled state, tied to `Promise.all([commitPendingChanges(), minTimer(600ms)])` so the spinner shows for at least 600ms. On error an `Alert` appears inside the dialog.
+
+**Key decisions:**
+- Sequential op execution (not parallel) prevents races (e.g., create must precede update of the same resource).
+- `duplicateMenu` uses a single `menu:create` key for the full cascade — consistent with the staged create pattern; the local-only delete optimization handles discard correctly since it looks for `menu:create:${menuId}`.
+- Minimum 600ms save spinner via local `isSaving` (separate from the store's `saving`) ensures feedback is visible even on sub-100ms saves.
+- No-op guards in `updateMenuSettings` / `updateCategory` / `updateItem` use strict equality (with `JSON.stringify` for arrays on items) to skip enqueueing when nothing changed.
+
+**Key context for next session:**
+- `menuStore` tests (#41) still needed — the staged model changes mutation behavior significantly; errors now surface through the confirm dialog rather than silent rollbacks, but no test file exists yet.
+- `discardPendingChanges` clears all `categories` and `items` from state — items re-fetch automatically via `useEffect` on the page. No blank state is visible because category re-fetch completes before items are needed.
+- The store's `saving` state is still available for future consumers (e.g., disabling drag-drop during a save).
 
 ### 2026-02-14 — Session 2: Issue housekeeping and brain setup
 
