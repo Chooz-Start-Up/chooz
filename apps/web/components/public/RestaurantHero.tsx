@@ -2,6 +2,7 @@
 
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -18,6 +19,12 @@ const DAY_LABELS: Record<string, string> = {
   saturday: "Sat",
   sunday: "Sun",
 };
+
+// Logo size constants
+const LOGO_SIZE = 96;
+const LOGO_HALF = LOGO_SIZE / 2;
+// Spacing below the logo before content starts (px)
+const LOGO_BELOW_GAP = 12;
 
 function formatTime(hhmm: string): string {
   const [h, m] = hhmm.split(":").map(Number);
@@ -46,8 +53,7 @@ function getHoursStatus(
   if (!entry) return null;
 
   if (entry.isClosed) {
-    const tomorrowKey = getTomorrowKey();
-    const tomorrowEntry = hours?.[tomorrowKey];
+    const tomorrowEntry = hours?.[getTomorrowKey()];
     const secondary = tomorrowEntry && !tomorrowEntry.isClosed
       ? `Opens tomorrow at ${formatTime(tomorrowEntry.open)}`
       : null;
@@ -68,28 +74,21 @@ function getHoursStatus(
   }
 
   if (nowMins >= closeMins) {
-    const tomorrowKey = getTomorrowKey();
-    const tomorrowEntry = hours?.[tomorrowKey];
+    const tomorrowEntry = hours?.[getTomorrowKey()];
     const secondary = tomorrowEntry && !tomorrowEntry.isClosed
       ? `Opens tomorrow at ${formatTime(tomorrowEntry.open)}`
       : null;
     return { primary: "Closed", secondary, color: "error.main" };
   }
 
-  const minsToClose = closeMins - nowMins;
-  if (minsToClose <= 30) {
+  if (closeMins - nowMins <= 30) {
     return { primary: "Closes soon", secondary: `at ${formatTime(entry.close)}`, color: "warning.main" };
   }
 
   return { primary: "Open", secondary: `Closes at ${formatTime(entry.close)}`, color: "success.main" };
 }
 
-interface HoursRowProps {
-  day: string;
-  isToday?: boolean;
-}
-
-function HoursRow({ day, restaurant, isToday }: HoursRowProps & { restaurant: Restaurant }) {
+function HoursRow({ day, restaurant, isToday }: { day: string; restaurant: Restaurant; isToday: boolean }) {
   const entry = restaurant.hours?.[day];
   if (!entry) return null;
   return (
@@ -118,10 +117,10 @@ interface RestaurantHeroProps {
 
 export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
   const todayKey = getTodayKey();
+  const hoursStatus = restaurant.hours ? getHoursStatus(restaurant.hours, todayKey) : null;
 
-  // Logo is 96px, centered horizontally, centered on the separator line (half above, half below)
-  const LOGO_SIZE = 96;
-  const LOGO_HALF = LOGO_SIZE / 2;
+  // Icon row indent: icon fontSize (18px) + gap (8px) = 26px
+  const ICON_INDENT = "26px";
 
   return (
     <Box sx={{ position: "relative" }}>
@@ -144,12 +143,20 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
             component="img"
             src="/logo.png"
             alt=""
-            sx={{ width: 88, height: 88, opacity: 0.3, position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+            sx={{
+              width: 36,
+              height: 36,
+              opacity: 0.3,
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+            }}
           />
         )}
       </Box>
 
-      {/* Logo — absolutely positioned, centered on the separator line */}
+      {/* Logo — absolutely centered on the banner bottom edge */}
       <Box
         sx={{
           position: "absolute",
@@ -181,86 +188,108 @@ export function RestaurantHero({ restaurant }: RestaurantHeroProps) {
             component="img"
             src="/logo.png"
             alt=""
-            sx={{ width: 56, height: 56, opacity: 0.5 }}
+            sx={{ width: 24, height: 24, opacity: 0.5 }}
           />
         )}
       </Box>
 
-      {/* Info section — top padding makes room for the half of logo below the separator */}
-      <Box sx={{ px: 2, pt: `${LOGO_HALF + 12}px`, pb: 2 }}>
+      {/* ── Identity block (centered) ── */}
+      <Box
+        sx={{
+          pt: `${LOGO_HALF + LOGO_BELOW_GAP}px`,
+          pb: 2,
+          px: 2,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+        }}
+      >
         {/* Name */}
-        <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2, mb: 1 }}>
+        <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2, mb: 0.5 }}>
           {restaurant.name}
         </Typography>
+
+        {/* Description */}
+        {restaurant.description && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, maxWidth: 400 }}>
+            {restaurant.description}
+          </Typography>
+        )}
 
         {/* Tags */}
         {restaurant.tags.length > 0 && (
           <Box
             sx={{
               display: "flex",
-              gap: 1,
-              overflowX: "auto",
-              pb: 0.5,
-              mb: 1.5,
-              "&::-webkit-scrollbar": { display: "none" },
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 0.75,
+              mb: restaurant.description ? 0 : 0.5,
             }}
           >
             {restaurant.tags.map((tag) => (
-              <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ flexShrink: 0 }} />
+              <Chip key={tag} label={tag} size="small" variant="outlined" />
             ))}
           </Box>
         )}
+      </Box>
 
-        {/* Address */}
-        {restaurant.address && (
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 0.75 }}>
-            <PlaceIcon sx={{ fontSize: 18, color: "text.secondary", mt: 0.15 }} />
-            <Typography variant="body2" color="text.secondary">
-              {restaurant.address}
-            </Typography>
-          </Box>
-        )}
+      {/* ── Contact & Hours block (left-aligned) ── */}
+      {(restaurant.address || restaurant.phone || restaurant.hours) && (
+        <Box sx={{ px: 2, pb: 2 }}>
+          <Divider sx={{ mb: 2 }} />
 
-        {/* Phone */}
-        {restaurant.phone && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
-            <PhoneIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-            <Typography variant="body2" color="text.secondary">
-              {restaurant.phone}
-            </Typography>
-          </Box>
-        )}
+          {/* Address */}
+          {restaurant.address && (
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 1 }}>
+              <PlaceIcon sx={{ fontSize: 18, color: "text.secondary", mt: "2px", flexShrink: 0 }} />
+              <Typography variant="body2" color="text.secondary">
+                {restaurant.address}
+              </Typography>
+            </Box>
+          )}
 
-        {/* Hours */}
-        {restaurant.hours && (() => {
-          const status = getHoursStatus(restaurant.hours, todayKey);
-          return (
+          {/* Phone */}
+          {restaurant.phone && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <PhoneIcon sx={{ fontSize: 18, color: "text.secondary", flexShrink: 0 }} />
+              <Typography variant="body2" color="text.secondary">
+                {restaurant.phone}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Hours */}
+          {restaurant.hours && (
             <Box>
-              {status && (
+              {/* Status row */}
+              {hoursStatus && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
-                  <AccessTimeIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                  <AccessTimeIcon sx={{ fontSize: 18, color: "text.secondary", flexShrink: 0 }} />
                   <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.75 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700, color: status.color }}>
-                      {status.primary}
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: hoursStatus.color }}>
+                      {hoursStatus.primary}
                     </Typography>
-                    {status.secondary && (
+                    {hoursStatus.secondary && (
                       <Typography variant="body2" color="text.secondary">
-                        {status.secondary}
+                        {hoursStatus.secondary}
                       </Typography>
                     )}
                   </Box>
                 </Box>
               )}
-              {/* Full week — always visible */}
-              <Box sx={{ pl: 3.5 }}>
+
+              {/* Full week — indented to align with status text */}
+              <Box sx={{ pl: ICON_INDENT }}>
                 {DAYS_ORDER.map((day) => (
                   <HoursRow key={day} day={day} restaurant={restaurant} isToday={day === todayKey} />
                 ))}
               </Box>
             </Box>
-          );
-        })()}
-      </Box>
+          )}
+        </Box>
+      )}
     </Box>
   );
 }

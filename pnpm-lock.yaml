@@ -122,6 +122,9 @@ importers:
       react-dom:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
+      react-qrcode-logo:
+        specifier: ^4.0.0
+        version: 4.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       zustand:
         specifier: ^5
         version: 5.0.11(@types/react@19.1.17)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0))
@@ -4976,6 +4979,9 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
+  qrcode-generator@2.0.4:
+    resolution: {integrity: sha512-mZSiP6RnbHl4xL2Ap5HfkjLnmxfKcPWpWe/c+5XxCuetEenqmNFf1FH/ftXPCtFG5/TDobjsjz6sSNL0Sr8Z9g==}
+
   qrcode-terminal@0.11.0:
     resolution: {integrity: sha512-Uu7ii+FQy4Qf82G4xu7ShHhjhGahEpCWc3x8UavY3CTcWV+ufmmCtwkr7ZKsX42jdL0kr1B5FKUeqJvAn51jzQ==}
     hasBin: true
@@ -5063,6 +5069,12 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  react-qrcode-logo@4.0.0:
+    resolution: {integrity: sha512-TcDdsJQe7P0OY7uA7Do4Z0DfIIjjqx81RbBGQY+90T2Ba42pUCx/cSI2UTwPPoH9WwE0StLb8A98mFgKIAI4JQ==}
+    peerDependencies:
+      react: 19.1.0
+      react-dom: 19.1.0
 
   react-redux@9.2.0:
     resolution: {integrity: sha512-ROY9fvHhwOD9ySfrF0wmvu//bKCQ6AeZZq1nJNtbDC+kk5DuSuNX/n6YWYF/SYy7bSba4D4FSz8DJeKY/S/r+g==}
@@ -11882,6 +11894,8 @@ snapshots:
 
   punycode@2.3.1: {}
 
+  qrcode-generator@2.0.4: {}
+
   qrcode-terminal@0.11.0: {}
 
   qs@6.14.2:
@@ -12008,6 +12022,12 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
+
+  react-qrcode-logo@4.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+    dependencies:
+      qrcode-generator: 2.0.4
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
 
   react-redux@9.2.0(@types/react@19.1.17)(react@19.1.0)(redux@5.0.1):
     dependencies:

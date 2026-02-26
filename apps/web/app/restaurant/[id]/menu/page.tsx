@@ -6,9 +6,10 @@ import IconButton from "@mui/material/IconButton";
 import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import Link from "next/link";
 import { use } from "react";
-import type { Category, Item, Menu } from "@chooz/shared";
+import type { Category, Item, Menu, Restaurant } from "@chooz/shared";
 import { categoryService, itemService, menuService, restaurantService } from "@chooz/services";
 import { MenuContent } from "@/components/public/MenuContent";
 import { MenuTabs } from "@/components/public/MenuTabs";
@@ -28,6 +29,7 @@ function HeaderSkeleton() {
 export default function MenuPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
 
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [restaurantName, setRestaurantName] = useState<string | null>(null);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
@@ -39,7 +41,10 @@ export default function MenuPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     Promise.all([restaurantService.getRestaurant(id), menuService.getMenus(id)])
       .then(([rest, fetchedMenus]) => {
-        if (rest) setRestaurantName(rest.name);
+        if (rest) {
+          setRestaurant(rest);
+          setRestaurantName(rest.name);
+        }
         setMenus(fetchedMenus);
         if (fetchedMenus.length > 0) {
           const available = fetchedMenus.find((m) => isMenuAvailable(m));
@@ -87,6 +92,43 @@ export default function MenuPage({ params }: { params: Promise<{ id: string }> }
 
   const selectedMenu = menus.find((m) => m.id === selectedMenuId);
   const cached = selectedMenuId ? menuCache[selectedMenuId] : undefined;
+
+  if (!pageLoading && restaurant?.isMenuReady === false) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "#FFFAEF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box sx={{ textAlign: "center", px: 3 }}>
+          <MenuBookIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Menu coming soon
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+            This restaurant is still preparing their menu.
+          </Typography>
+          <Typography
+            component={Link}
+            href={`/restaurant/${id}`}
+            variant="body2"
+            sx={{
+              color: "#D11D27",
+              fontWeight: 600,
+              textDecoration: "none",
+              "&:hover": { textDecoration: "underline" },
+            }}
+          >
+            ← Back to profile
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#FFFAEF" }}>

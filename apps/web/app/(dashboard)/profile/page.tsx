@@ -12,6 +12,7 @@ import { useRestaurantStore } from "@/stores/restaurantStore";
 import { RestaurantForm, type RestaurantFormData } from "@/components/restaurant/RestaurantForm";
 import { ImageUploadSection } from "@/components/restaurant/ImageUploadSection";
 import { ConfirmChangesDialog, computeChanges } from "@/components/restaurant/ConfirmChangesDialog";
+import { VisibilityPanel } from "@/components/restaurant/VisibilityPanel";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -116,7 +117,8 @@ export default function ProfilePage() {
         address: pendingFormData.address,
         hours: pendingFormData.hours,
         tags: pendingFormData.tags,
-        isPublished: pendingFormData.isPublished,
+        // isPublished is managed by VisibilityPanel and saved independently
+        isPublished: restaurant.isPublished,
       });
       setConfirmDialogOpen(false);
       setPendingFormData(null);
@@ -151,34 +153,46 @@ export default function ProfilePage() {
     : [];
 
   return (
-    <Box sx={{ maxWidth: 720 }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-        Restaurant Profile
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Update your restaurant information.
-      </Typography>
-      <ImageUploadSection
-        variant="hero"
-        ownerUid={firebaseUser?.uid ?? ""}
-        restaurantId={restaurant.id}
-        bannerImageUrl={restaurant.bannerImageUrl}
-        logoImageUrl={restaurant.logoImageUrl}
-        onImageUpdated={async (field, url) => {
-          await updateRestaurant(restaurant.id, { [field]: url });
-          if (initialSnapshot.current) {
-            const key = field === "bannerImageUrl" ? "banner" : "logo";
-            initialSnapshot.current.images[key] = url;
-          }
-        }}
-      />
-      <RestaurantForm
-        initialData={restaurant}
-        onSubmit={handleSubmit}
-        submitLabel="Save Changes"
-        submitting={submitting}
-        draftKey={`chooz:draft:profile:${restaurant.id}`}
-      />
+    <>
+      <Box sx={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
+        {/* Left column — main form */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+            Restaurant Profile
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+            Update your restaurant information.
+          </Typography>
+          <ImageUploadSection
+            variant="hero"
+            ownerUid={firebaseUser?.uid ?? ""}
+            restaurantId={restaurant.id}
+            bannerImageUrl={restaurant.bannerImageUrl}
+            logoImageUrl={restaurant.logoImageUrl}
+            onImageUpdated={async (field, url) => {
+              await updateRestaurant(restaurant.id, { [field]: url });
+              if (initialSnapshot.current) {
+                const key = field === "bannerImageUrl" ? "banner" : "logo";
+                initialSnapshot.current.images[key] = url;
+              }
+            }}
+          />
+          <RestaurantForm
+            initialData={restaurant}
+            onSubmit={handleSubmit}
+            submitLabel="Save Changes"
+            submitting={submitting}
+            draftKey={`chooz:draft:profile:${restaurant.id}`}
+            hideVisibility
+          />
+        </Box>
+
+        {/* Right sidebar */}
+        <Box sx={{ width: 300, flexShrink: 0, position: "sticky", top: 24 }}>
+          <VisibilityPanel />
+        </Box>
+      </Box>
+
       <ConfirmChangesDialog
         open={confirmDialogOpen}
         onClose={() => {
@@ -214,6 +228,6 @@ export default function ProfilePage() {
           No changes to save.
         </Alert>
       </Snackbar>
-    </Box>
+    </>
   );
 }

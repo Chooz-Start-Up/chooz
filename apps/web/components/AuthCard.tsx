@@ -27,7 +27,7 @@ export function AuthCard({ heading, subtitle, children }: AuthCardProps) {
         component="img"
         src="/logo.png"
         alt="Chooz"
-        sx={{ width: 100, height: 100, mb: 0 }}
+        sx={{ width: 40, height: 40, mb: 0 }}
       />
 
       <Typography

@@ -18,6 +18,7 @@ export interface Restaurant {
   claimDate: Timestamp | null;
   verifiedDate: Timestamp | null;
   isPublished: boolean;
+  isMenuReady?: boolean; // undefined = true (backwards-compatible default)
 
   // Contact & Location
   phone: string;

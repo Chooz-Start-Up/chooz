@@ -27,7 +27,7 @@ export function LandingHeader() {
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 0,
+              gap: 1,
               textDecoration: "none",
             }}
           >
@@ -35,14 +35,13 @@ export function LandingHeader() {
               component="img"
               src="/logo.png"
               alt="Chooz"
-              sx={{ width: 60, height: 60 }}
+              sx={{ width: 24, height: 24 }}
             />
             <Typography
               variant="h5"
               sx={{
                 color: "primary.main",
                 fontWeight: 700,
-                ml: -1,
               }}
             >
               Chooz

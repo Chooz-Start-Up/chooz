@@ -86,6 +86,7 @@ export default function DashboardLayout({
               display: "flex",
               alignItems: "center",
               justifyContent: expanded ? "flex-start" : "center",
+              gap: 1,
               overflow: "hidden",
               height: 40,
             }}
@@ -95,10 +96,8 @@ export default function DashboardLayout({
               src="/logo.png"
               alt="Chooz"
               sx={{
-                width: 52,
-                height: 52,
-                m: -1.5,
-                mr: expanded ? -1 : -1.5,
+                width: 20,
+                height: 20,
                 filter: "brightness(0) invert(1)",
               }}
             />

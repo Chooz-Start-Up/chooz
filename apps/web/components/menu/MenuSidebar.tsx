@@ -22,6 +22,7 @@ import type { Menu } from "@chooz/shared";
 import { InlineEdit } from "./InlineEdit";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { MenuSettingsPanel } from "./MenuSettingsPanel";
+import { QRCodePanel } from "./QRCodePanel";
 
 interface MenuSidebarProps {
   menus: Menu[];
@@ -94,10 +95,21 @@ export function MenuSidebar({
         overflow: "hidden",
       }}
     >
-      <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+      <Box
+        sx={{
+          px: 2,
+          py: 1.5,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
           Menus
         </Typography>
+        <QRCodePanel />
       </Box>
 
       <Droppable droppableId="menus" type="MENU">

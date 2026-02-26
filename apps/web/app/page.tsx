@@ -179,14 +179,14 @@ export default function HomePage() {
             gap: 2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box
               component="img"
               src="/logo.png"
               alt="Chooz"
-              sx={{ width: 56, height: 56, filter: "brightness(0) invert(1)" }}
+              sx={{ width: 24, height: 24, filter: "brightness(0) invert(1)" }}
             />
-            <Box sx={{ ml: -1 }}>
+            <Box>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Chooz
               </Typography>

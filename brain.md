@@ -35,8 +35,8 @@
 | Claim flow UI | Not started | — |
 | Admin dashboard (seed, claims, moderation) | Done | `apps/web/app/(admin)/`, `apps/web/stores/adminStore.ts`, `apps/web/components/admin/` |
 | Landing page | Done | `apps/web/app/page.tsx`, `apps/web/components/landing/` |
-| Customer web fallback — profile page | Done (client-side) | `apps/web/app/restaurant/[id]/page.tsx`, `components/public/RestaurantHero.tsx` |
-| Customer web fallback — menu viewer | Done (client-side) | `apps/web/app/restaurant/[id]/menu/page.tsx`, `components/public/MenuTabs.tsx`, `components/public/MenuContent.tsx` |
+| Customer web fallback — profile page | Done (client-side) | `apps/web/app/restaurant/[id]/page.tsx`, `components/public/RestaurantHero.tsx`. Soft-block page when `!isPublished`; conditional FAB (Menu coming soon) when `isMenuReady === false` |
+| Customer web fallback — menu viewer | Done (client-side) | `apps/web/app/restaurant/[id]/menu/page.tsx`, `components/public/MenuTabs.tsx`, `components/public/MenuContent.tsx`. Coming-soon guard when `isMenuReady === false` |
 | Mobile screens | All stubbed, none implemented | `apps/mobile/app/` |
 | Legacy web app (CRA + React 18) | Running, reference only | `chooz-web/owner-web/` |
 | PRD v1.0 | Complete | `PRD.md` |
@@ -99,6 +99,9 @@ chooz/
 | RestaurantPreviewGrid | `apps/web/components/landing/RestaurantPreviewGrid.tsx` | Fetches up to 8 published restaurants, card grid with skeleton loading |
 | AuthGuard | `apps/web/components/AuthGuard.tsx` | Role-based route protection |
 | AuthProvider | `apps/web/components/AuthProvider.tsx` | Firebase auth state listener |
+| VisibilityPanel | `apps/web/components/restaurant/VisibilityPanel.tsx` | "Publish & Share" panel on owner profile page. Two toggles: **Listed** (`isPublished`) with canPublish guard + confirm dialog; **Menu Ready** (`isMenuReady`, disabled with tooltip when not listed) + confirm dialog. Includes QR code (display, copy, download PNG, print). |
+| QRCodeSection | `apps/web/components/restaurant/QRCodeSection.tsx` | Standalone QR code Paper card (display, copy link, download PNG, print). Reads from restaurantStore. |
+| QRCodePanel | `apps/web/components/menu/QRCodePanel.tsx` | QR code icon button that opens a modal dialog (display, copy link, download, print). Used in menu builder sidebar. |
 
 ### Firebase Projects
 
@@ -202,7 +205,7 @@ chooz/
 - **Admin dashboard is fully built** — Seed tool, claims queue, restaurant moderation table all functional. Cloud Functions (`seedRestaurant`, `processClaim`) deployed to staging. Admin route group requires `role: "admin"` in the user document.
 - **Three route groups** — `(auth)` for public auth pages, `(dashboard)` for owner-protected pages with sidebar, `(onboarding)` for owner-protected pages without sidebar (welcome, setup).
 - **RestaurantForm has two variants** — `"edit"` shows sticky bar with "View Changes" button (profile page), `"create"` shows centered submit button (setup page).
-- **Publish toggle is gated** — Fields are not required to save/create, but name, description, and phone must be filled to toggle visibility to public. Toggle is proactively disabled with a warning message when fields are missing.
+- **Two-toggle publish model** — `VisibilityPanel` has two independent switches: **Listed** (`isPublished`, gated on name/description/phone) and **Menu Ready** (`isMenuReady`, disabled with tooltip when not listed). `isMenuReady` defaults to `true` when undefined (backwards-compatible). Customer-facing profile page shows a soft-block page when `!isPublished`, and a grayed-out "Menu coming soon" FAB when `isMenuReady === false`. Menu page shows a coming-soon state when `isMenuReady === false`.
 - **Draft persistence uses value comparison** — Compares against clean snapshot to avoid false drafts from React strict mode double-mounts.
 - **Backend services are ahead of UI** — Most Firestore services (menu, category, item, claim, storage) are fully implemented but have no UI consuming them yet.
 - **Firebase Dynamic Links deprecated** — QR code deep linking needs a replacement solution before Phase 1 launch.
@@ -438,6 +441,28 @@ chooz/
 - #35 (mobile-responsive dashboard) is the next UI polish ticket
 - Firestore composite index is deployed to staging — may take a few minutes to build after deploy
 - `overflow-x: clip` in globals.css — watch for any side effects on other pages
+
+### 2026-02-25 — Session 15: QR code share panel, VisibilityPanel, and fine-grained publicity controls
+
+**What was done:**
+- **VisibilityPanel** (`apps/web/components/restaurant/VisibilityPanel.tsx`) — New component on owner profile page combining publish controls + QR code share. Replaced the publish toggle in `RestaurantForm`. Two independent toggles with confirm dialogs: **Listed** (`isPublished`, blocked by canPublish guard) and **Menu Ready** (`isMenuReady`, disabled with tooltip when not listed). QR code with branded dots/eyes, copy link, download PNG, print.
+- **QRCodeSection** (`apps/web/components/restaurant/QRCodeSection.tsx`) — Standalone QR code Paper card (copy, download, print) for use on the profile page sidebar.
+- **QRCodePanel** (`apps/web/components/menu/QRCodePanel.tsx`) — Compact QR code icon button in the menu builder sidebar that opens a modal dialog.
+- **`isMenuReady` shared type** — Added `isMenuReady?: boolean` to `Restaurant` type in `@chooz/shared`. Undefined = true (backwards-compatible). Deployed via existing Firestore converter.
+- **Customer profile page soft-block** — When `!restaurant.isPublished`, `/restaurant/[id]` shows a friendly branded soft-block page instead of the hero content. QR code URLs never 404 even when a restaurant is unlisted.
+- **Conditional FAB** — When `isMenuReady === false`, the "Menu" FAB on the profile page is replaced with a grayed-out disabled "Menu coming soon" button. Normal red "Menu" FAB when ready.
+- **Customer menu page guard** — `/restaurant/[id]/menu` shows a centered "Menu coming soon" state with a back-to-profile link when `isMenuReady === false`.
+- Various UI polish across dashboard layout, profile page, landing page, menu content, and restaurant hero.
+
+**Key decisions:**
+- `isMenuReady` is `undefined` by default (truthy) so existing restaurants don't break.
+- Soft-block page uses `#FFFAEF` tan background (matching the overall customer page theme) — not a 404, so printed QR codes remain valid even when unlisted.
+- Menu Ready toggle is intentionally disabled when not Listed — you can't have a visible menu for an invisible restaurant.
+
+**Key context for next session:**
+- QR code deep linking (#18) is still open — QR code UI is done but app-vs-web routing is not.
+- #9 (QR code) is partially done (UI complete); can be closed once #18 (deep linking) is resolved.
+- `isMenuReady` is not yet indexed or synced to Algolia — if Algolia sync (#37) is fixed, this field may need to be considered.
 
 ### 2026-02-22 — Session 14: Customer restaurant profile + menu viewer (web fallback)
 

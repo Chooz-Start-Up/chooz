@@ -77,8 +77,8 @@ function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
           src="/logo.png"
           alt=""
           sx={{
-            width: 88,
-            height: 88,
+            width: 36,
+            height: 36,
             opacity: 0.5,
             ...(restaurant.bannerImageUrl ? { display: "none" } : {}),
           }}

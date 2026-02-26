@@ -61,6 +61,8 @@ interface RestaurantFormProps {
   draftKey?: string;
   /** "edit" shows sticky save bar (default), "create" shows a static submit button at the bottom */
   variant?: "edit" | "create";
+  /** When true, the Visibility section is omitted (managed externally via VisibilityPanel) */
+  hideVisibility?: boolean;
 }
 
 interface DraftFields {
@@ -122,7 +124,7 @@ function serializeFields(f: DraftFields): string {
   return JSON.stringify(f);
 }
 
-export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting, draftKey, variant = "edit" }: RestaurantFormProps) {
+export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting, draftKey, variant = "edit", hideVisibility = false }: RestaurantFormProps) {
   const [restoredFromDraft, setRestoredFromDraft] = useState(false);
 
   const [init] = useState<DraftFields>(() => {
@@ -247,7 +249,7 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
 
   return (
     <>
-      <Box component="form" ref={formRef} onSubmit={handleSubmit} sx={{ maxWidth: 720, pb: 10 }}>
+      <Box component="form" ref={formRef} onSubmit={handleSubmit} sx={{ pb: 10 }}>
         {restoredFromDraft && (
           <Alert
             severity="info"
@@ -387,7 +389,7 @@ export function RestaurantForm({ initialData, onSubmit, submitLabel, submitting,
         </Paper>
 
         {/* Visibility */}
-        {initialData && (
+        {!hideVisibility && initialData && (
           <Paper variant="outlined" sx={{ p: 3, mb: 3, bgcolor: colors.secondary.main }}>
             <Typography variant="h6" sx={{ mb: 0.5 }}>
               Visibility

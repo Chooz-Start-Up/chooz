@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Fab from "@mui/material/Fab";
 import Skeleton from "@mui/material/Skeleton";
@@ -65,7 +64,7 @@ export default function RestaurantPage({ params }: { params: Promise<{ id: strin
           px: 3,
         }}
       >
-        <Box component="img" src="/logo.png" alt="Chooz" sx={{ width: 100, height: 100 }} />
+        <Box component="img" src="/logo.png" alt="Chooz" sx={{ width: 40, height: 40 }} />
         <Typography variant="h6" sx={{ fontWeight: 700, textAlign: "center" }}>
           Hmm, we can&apos;t find that spot.
         </Typography>
@@ -92,6 +91,45 @@ export default function RestaurantPage({ params }: { params: Promise<{ id: strin
 
   if (!restaurant) return null;
 
+  if (!restaurant.isPublished) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "#FFFAEF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box sx={{ textAlign: "center", px: 3, maxWidth: 320 }}>
+          <Box component="img" src="/logo.png" alt="Chooz" sx={{ width: 40, height: 40, mb: 2 }} />
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            This restaurant isn&apos;t available right now.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Check back soon.
+          </Typography>
+          <Typography
+            component={Link}
+            href="/"
+            variant="body2"
+            sx={{
+              mt: 2,
+              display: "block",
+              color: "#D11D27",
+              fontWeight: 600,
+              textDecoration: "none",
+              "&:hover": { textDecoration: "underline" },
+            }}
+          >
+            Explore restaurants →
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     // Tan page background — the card "floats" on it at wider viewports
     <Box sx={{ minHeight: "100vh", bgcolor: "#FFFAEF" }}>
@@ -109,31 +147,36 @@ export default function RestaurantPage({ params }: { params: Promise<{ id: strin
       >
       <RestaurantHero restaurant={restaurant} />
 
-      {!restaurant.isPublished && (
-        <Alert severity="warning" sx={{ mx: 2, mt: 1, borderRadius: 2 }}>
-          This restaurant hasn&apos;t published their menu yet.
-        </Alert>
+      {/* Conditional FAB — Menu Ready */}
+      {restaurant.isMenuReady === false ? (
+        <Fab
+          variant="extended"
+          disabled
+          sx={{ position: "fixed", bottom: 24, right: 24, boxShadow: 4 }}
+        >
+          <MenuBookIcon sx={{ mr: 1 }} />
+          Menu coming soon
+        </Fab>
+      ) : (
+        <Fab
+          variant="extended"
+          component={Link}
+          href={`/restaurant/${id}/menu`}
+          sx={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            bgcolor: "#D11D27",
+            color: "white",
+            "&:hover": { bgcolor: "#A90011" },
+            boxShadow: 4,
+            textDecoration: "none",
+          }}
+        >
+          <MenuBookIcon sx={{ mr: 1 }} />
+          Menu
+        </Fab>
       )}
-
-      {/* Red FAB — View Menu */}
-      <Fab
-        variant="extended"
-        component={Link}
-        href={`/restaurant/${id}/menu`}
-        sx={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-          bgcolor: "#D11D27",
-          color: "white",
-          "&:hover": { bgcolor: "#A90011" },
-          boxShadow: 4,
-          textDecoration: "none",
-        }}
-      >
-        <MenuBookIcon sx={{ mr: 1 }} />
-        Menu
-      </Fab>
       </Box>
     </Box>
   );
